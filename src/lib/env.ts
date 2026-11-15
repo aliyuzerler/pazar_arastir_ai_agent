@@ -42,6 +42,7 @@ const envSchema = z.object({
 
   // Zamanlanmış işler
   CRON_SECRET: z.string().optional(),
+  MAX_DAILY_QUERIES: z.coerce.number().int().min(1).max(100000).default(200),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

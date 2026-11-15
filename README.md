@@ -77,7 +77,7 @@ işaretlenir.
 | 4 | Araştırma orkestrasyonu + eşleştirme | ✅ Tamamlandı |
 | 5 | Fiyat geçmişi ve stok gözlemleri | ✅ Tamamlandı |
 | 6 | Fiyatlandırma öneri motoru | ✅ Tamamlandı |
-| 7 | İzleme, zamanlanmış işler, uyarılar | ⏳ Sırada |
+| 7 | İzleme, zamanlanmış işler, uyarılar | ✅ Tamamlandı |
 | 8 | SaaS-ready tenancy ve Vercel hazırlığı | ⏳ Sırada |
 | 9 | Hardening ve release candidate | ⏳ Sırada |
 
@@ -451,3 +451,52 @@ npm run test:e2e    → 26 test, 26 geçti (profil → araştırma → öneri ak
 - Öneri pazaryerine fiyat YAZMAZ (öneri only).
 - FX kaynağı yokken farklı para birimindeki teklifler toplanmaz.
 - Sonraki faz: izleme işleri, zamanlanmış kontroller, fiyat/stok uyarıları.
+
+---
+
+## FAZ 7 — Ürün izleme, periyodik snapshot ve bildirimler
+
+**Durum:** ✅ Tamamlandı — `prompts/tests/TEST_07_MONITORING_AND_ALERTS.md` kontrolleri geçti.
+
+### Yapılanlar
+
+- **Şema:** `monitoring_jobs` (durum makinesi idle/running/failed/paused,
+  `lock_until` kilidi, frequencyHours), `alerts` (fiyat düşüşü/yükselişi,
+  stok değişimi; okundu işaretleme), `provider_quota_usage` (günlük kota,
+  workspace+provider+gün unique).
+- **Kilit + idempotency:** claim adımı koşullu UPDATE ile kilit alır; aynı
+  iş aynı tick'te ikinci kez alınamaz (entegrasyon testi), kilit 5 dk sonra
+  timeout olur; saatlik idempotency key ile tekrarlı koşu çift gözlem üretmez.
+- **Worker:** `npm run worker` — kontrollü döngü, TICK saniyede bir **bounded
+  batch** (maks 5 iş); hata işi failed yapar, 15 dk sonra retry planlar.
+- **Vercel Cron:** `/api/cron/monitoring` — `Authorization: Bearer CRON_SECRET`
+  zorunlu; yetkisiz çağrı 401 (E2E ile doğrulanır). Fonksiyon içinde sonsuz
+  döngü yoktur.
+- **Uyarılar:** eşik (varsayılan %5) üzeri fiyat değişimi + bulunabilirlik
+  değişimi (yalnızca kaynak gerçekten veriyorsa; "unknown" uyarı üretmez).
+- **Kota koruması:** günlük sağlayıcı sorgu bütçesi (MAX_DAILY_QUERIES,
+  varsayılan 200) dolduğunda iş ertelenir.
+- **Arayüz:** Fiyat İzleme sayfası — iş tablosu (durum, son/sonraki kontrol,
+  sıklık seçimi, duraklat/başlat, şimdi çalıştır) + etkinlik akışı (okundu
+  işaretleme).
+
+### Test sonuçları
+
+```
+npm run typecheck   → 0 hata
+npm run lint        → 0 hata
+npm test            → 106 test, 106 geçti (uyarı eşikleri, kilit, paused iş,
+                      batch çalıştırma, kota)
+npm run build       → başarılı
+npm run test:e2e    → 29 test, 29 geçti (izleme sayfası akışı, cron 401)
+```
+
+### Ekran görüntüsü
+
+Fiyat İzleme — iş tablosu ve etkinlik akışı (1440×900):
+![Fiyat İzleme](docs/screenshots/faz-7-monitoring-light.png)
+
+### Bilinen sınırlar / sonraki faza hazırlık
+
+- Uyarı eşiği ürün bazında yapılandırma Faz 8'de ayarlara bağlanacak.
+- Sonraki faz: SaaS-ready workspace izolasyon denetimi ve Vercel deploy gate.

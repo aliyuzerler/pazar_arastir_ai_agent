@@ -13,7 +13,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 
-import { products, workspaces } from "../../server/db/schema";
+import { monitoringJobs, products, workspaces } from "../../server/db/schema";
 import { ensureSampleProducts } from "../../server/db/sample-products";
 
 export default async function globalSetup(): Promise<void> {  process.env.DB_DRIVER = "pglite";
@@ -53,6 +53,20 @@ export default async function globalSetup(): Promise<void> {  process.env.DB_DRI
 
   await db.delete(products);
   await ensureSampleProducts(db as never, workspaceId);
+
+  // İzleme işini burada garanti et (alias zinciri kullanmadan).
+  const tracked = await db.select().from(products).limit(1);
+  if (tracked[0]) {
+    await db
+      .insert(monitoringJobs)
+      .values({
+        workspaceId,
+        productId: tracked[0].id,
+        status: "idle",
+        frequencyHours: 24,
+      })
+      .onConflictDoNothing();
+  }
 
   await client.close();
   console.log("[global-setup] E2E pglite hazır:", process.env.PG_LITE_DATA_DIR);

@@ -17,7 +17,8 @@
     "test:e2e": "bash scripts/e2e.sh",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/server/db/migrate.ts",
-    "db:seed": "tsx src/server/db/seed.ts"
+    "db:seed": "tsx src/server/db/seed.ts",
+    "worker": "tsx src/server/jobs/worker.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.17",

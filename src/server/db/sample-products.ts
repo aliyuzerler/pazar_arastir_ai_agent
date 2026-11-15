@@ -5,7 +5,7 @@
 import { and, eq } from "drizzle-orm";
 
 import type { AppDatabase } from "./driver";
-import { products } from "./schema";
+import { monitoringJobs, products } from "./schema";
 
 const SAMPLE_PRODUCTS = [
   {
@@ -88,5 +88,25 @@ export async function ensureSampleProducts(db: AppDatabase, workspaceId: string)
       created += 1;
     }
   }
+
+  // İzleme açık örnek ürün için izleme işi garanti et (idempotent).
+  const tracked = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(and(eq(products.workspaceId, workspaceId), eq(products.trackingEnabled, true)))
+    .limit(1);
+  if (tracked[0]) {
+    // Doğrudan insert: seed, araştırma/izleme servis zincirini çekmez.
+    await db
+      .insert(monitoringJobs)
+      .values({
+        workspaceId,
+        productId: tracked[0].id,
+        status: "idle",
+        frequencyHours: 24,
+      })
+      .onConflictDoNothing();
+  }
+
   return created;
 }
