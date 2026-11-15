@@ -7,7 +7,7 @@ import { runMigrations } from "@/server/db/migrator";
 import { createProduct } from "@/server/db/repositories/product-repository";
 import { runResearch } from "@/server/application/research-orchestrator";
 import { listObservations } from "@/server/application/price-history-service";
-import { priceObservations, products, workspaces } from "@/server/db/schema";
+import { products, workspaces } from "@/server/db/schema";
 
 /**
  * Entegrasyon (TEST_05): koşu → our_snapshot gözlemleri, provider_history

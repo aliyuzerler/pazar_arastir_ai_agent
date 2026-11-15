@@ -76,7 +76,7 @@ işaretlenir.
 | 3 | Provider katmanı + DemoProvider | ✅ Tamamlandı |
 | 4 | Araştırma orkestrasyonu + eşleştirme | ✅ Tamamlandı |
 | 5 | Fiyat geçmişi ve stok gözlemleri | ✅ Tamamlandı |
-| 6 | Fiyatlandırma öneri motoru | ⏳ Sırada |
+| 6 | Fiyatlandırma öneri motoru | ✅ Tamamlandı |
 | 7 | İzleme, zamanlanmış işler, uyarılar | ⏳ Sırada |
 | 8 | SaaS-ready tenancy ve Vercel hazırlığı | ⏳ Sırada |
 | 9 | Hardening ve release candidate | ⏳ Sırada |
@@ -399,3 +399,55 @@ npm run test:e2e    → araştırma akış testleri Faz 4'te 22/22 geçti; Faz 5
 - Grafik iki nokta arasını çizgiyle bağlar; bu trend okumasıdır, günlük
   gözlem değildir (tooltip gerçek zaman damgasını gösterir).
 - Sonraki faz: maliyet/fiyat öneri motoru (Decimal.js, break-even + 3 strateji).
+
+---
+
+## FAZ 6 — Maliyet, fiyatlandırma ve öneri motoru
+
+**Durum:** ✅ Tamamlandı — `prompts/tests/TEST_06_PRICING_RECOMMENDATIONS.md` kontrolleri geçti.
+
+### Yapılanlar
+
+- **Decimal motor:** tüm parasal hesaplar Decimal.js ile (JS float yok).
+  `C = alış + giriş kargo + paketleme + diğer sabit`; başa baş = (C+F)/(1−r);
+  hedef = (C+F)/(1−r−m) (r+m ≥ 1 → hata); katkı = P×(1−r)−(C+F); marj = katkı/P.
+- **Piyasa istatistikleri:** exact ve muadil teklifler AYRI; IQR (1.5×) ile
+  aykırı işaretleme (referansta kullanılmaz); farklı para birimi toplanamaz,
+  sayılır ve uyarı üretilir; reddedilen teklifler hariç.
+- **3 strateji (deterministik):** rekabetçi = aykırısız exact medyanı;
+  dengeli = (referans + hedef)/2; kâr odaklı = hedef fiyat. Öneri asla
+  sessizce başa başın altına inmez → uyarı + başa başa çekme. Güven skoru
+  örnek sayısı + kaynak kalitesinden (yalnız muadil → 0.5 üst sınır).
+- **Profil CRUD:** oranlar 0-1 ondalık (doğrulamalı), vergi modu ve komisyon
+  tabanı açık yapılandırma (sabit vergi oranı YOK); ilk profil otomatik
+  varsayılan olur; tüm repository fonksiyonları workspace kapsamlı.
+- **Geçmiş + denetlenebilirlik:** her hesap `calculation_inputs` anlık
+  görüntüsüyle saklanır; aynı girdi → aynı fiyat (testle doğrulanır).
+- **Arayüz:** Fiyat Analizi sayfası (profil listesi + form + formül kartı),
+  ürün detayında "Fiyat analizi" bölümü (3 strateji kartı, güven rozeti,
+  uyarılar, formül açıklaması).
+
+### Test sonuçları
+
+```
+npm run typecheck   → 0 hata
+npm run lint        → 0 hata
+npm test            → 97 test, 97 geçti (formül sınırları, geçersiz girdiler,
+                      IQR aykırılık, para birimi, determinizm, entegrasyon)
+npm run build       → başarılı
+npm run test:e2e    → 26 test, 26 geçti (profil → araştırma → öneri akışı,
+                      geçersiz oran reddi, formül görünürlüğü)
+```
+
+### Ekran görüntüleri
+
+| | |
+| --- | --- |
+| ![Fiyat Analizi](docs/screenshots/faz-6-pricing-analysis-light.png) | ![Öneri kartları](docs/screenshots/faz-6-product-pricing-light.png) |
+| Profil yönetimi + formüller | Ürün detayında 3 strateji kartı (güven skorlarıyla) |
+
+### Bilinen sınırlar / sonraki faza hazırlık
+
+- Öneri pazaryerine fiyat YAZMAZ (öneri only).
+- FX kaynağı yokken farklı para birimindeki teklifler toplanmaz.
+- Sonraki faz: izleme işleri, zamanlanmış kontroller, fiyat/stok uyarıları.

@@ -16,8 +16,11 @@ import { formatDateTime, formatMoney } from "@/lib/format";
 import { ProductArchiveButton } from "@/features/products/product-archive-button";
 import { ResearchLauncher } from "@/features/research/research-launcher";
 import { PriceHistorySection } from "@/features/pricing/price-history-section";
+import { PricingPanel } from "@/features/pricing/pricing-panel";
+import { resolvePricingProfile } from "@/server/application/pricing-service";
 import { listObservations } from "@/server/application/price-history-service";
 import { computePriceStats, type PricePoint } from "@/server/domain/price-history";
+import Decimal from "decimal.js";
 import { getDb } from "@/server/db/driver";
 import { getProduct } from "@/server/db/repositories/product-repository";
 import { resolveWorkspaceContext } from "@/server/security/workspace-context";
@@ -47,6 +50,14 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     }));
   const ourStats = computePriceStats(toPoints(series.ourSnapshots));
   const providerStats = computePriceStats(toPoints(series.providerHistory));
+
+  const costBase = Decimal.sum(
+    product.unitCost,
+    product.inboundShippingPerUnit,
+    product.packagingCost,
+    product.otherFixedCost,
+  );
+  const profile = await resolvePricingProfile(db, workspace.id, product);
 
   const facts: { label: string; value: string }[] = [
     { label: "Marka", value: product.brand ?? "Bilgi yok" },
@@ -177,6 +188,23 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         ourStats={ourStats}
         providerStats={providerStats}
       />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Fiyat analizi</CardTitle>
+          <CardDescription>
+            Başa baş fiyat, hedef marj ve 3 strateji önerisi; onaylı exact tekliflere dayanır.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PricingPanel
+            productId={product.id}
+            currency={product.currency}
+            costBase={costBase.toFixed(2)}
+            hasProfile={Boolean(profile)}
+          />
+        </CardContent>
+      </Card>
     </section>
   );
 }
