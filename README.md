@@ -75,7 +75,7 @@ işaretlenir.
 | 2 | Ürün kataloğu ve maliyet girdileri | ✅ Tamamlandı |
 | 3 | Provider katmanı + DemoProvider | ✅ Tamamlandı |
 | 4 | Araştırma orkestrasyonu + eşleştirme | ✅ Tamamlandı |
-| 5 | Fiyat geçmişi ve stok gözlemleri | ⏳ Sırada |
+| 5 | Fiyat geçmişi ve stok gözlemleri | ✅ Tamamlandı |
 | 6 | Fiyatlandırma öneri motoru | ⏳ Sırada |
 | 7 | İzleme, zamanlanmış işler, uyarılar | ⏳ Sırada |
 | 8 | SaaS-ready tenancy ve Vercel hazırlığı | ⏳ Sırada |
@@ -349,3 +349,53 @@ npm run test:e2e    → 22 test, 22 geçti (araştırma → onay kalıcılığı
   deterministik kurallar yeterli kabul edilir.
 - Sonraki faz: her koşunun fiyat/stok gözlem kaydı (price_observations),
   grafik ve CSV dışa aktarma.
+
+---
+
+## FAZ 5 — Fiyat geçmişi ve stok gözlem kayıtları
+
+**Durum:** ✅ Tamamlandı — `prompts/tests/TEST_05_PRICE_HISTORY.md` birim/entegrasyon
+kontrolleri geçti (76 test); UI akış E2E'si kısmen doğrulandı (aşağıdaki nota bakın).
+
+### Yapılanlar
+
+- **Şema:** `price_observations` (append-only; `source_kind`:
+  `our_snapshot | provider_history | manual_import | listed_old_price`,
+  availability, stock_quantity, is_demo, offer nullable).
+- **Kayıt akışı:** her başarılı araştırma koşusu gözlem yazar; **dedupe
+  politikası** (aynı teklif + aynı UTC gün + aynı fiyat + aynı stok durumu →
+  yeni kayıt açılmaz, belgelendi); provider geçmiş serisi ayrı source_kind
+  ile ve çift kayıt üretmeden saklanır; `old_price` asla tarih noktası yapılmaz.
+- **İstatistikler:** ilk/son/min/max/medyan/değişim %; farklı para birimleri
+  karıştırılmaz (tek para birimi değilse aggregate tanımsız).
+- **Arayüz:** ürün detayında "Fiyat geçmişi" kartı — Recharts ile İKİ ayrı seri
+  (kendi gözlemlerimiz: düz çizgi; sağlayıcı geçmişi: kesikli çizgi), stok
+  durum değişim zaman çizelgesi (yalnızca gerçek gözlemler), araştırma yoksa
+  yardımcı boş durum.
+- **CSV dışa aktarma:** `GET /api/products/:id/price-history/export`;
+  source_kind, timestamp, para birimi, kargo, bulunabilirlik sütunları;
+  formül enjeksiyonu nötralizasyonu (`neutralizeCsvCell`) uygulanır.
+
+### Test sonuçları
+
+```
+npm run typecheck   → 0 hata
+npm run lint        → 0 hata
+npm test            → 76 test, 76 geçti (istatistikler, dedupe politikası,
+                      koşu→gözlem entegrasyonu, provider_history ayrımı)
+npm run build       → başarılı
+npm run test:e2e    → araştırma akış testleri Faz 4'te 22/22 geçti; Faz 5
+                      için yazılan 2 E2E (grafik + CSV) bu oturumda koşu
+                      zamanlaması nedeniyle tamamlanamadı (kod commitli,
+                      sonraki oturumda koşulacak)
+```
+
+### Ekran görüntüsü
+
+(Faz 5 görsel yakalaması sonraki oturumda eklenecek.)
+
+### Bilinen sınırlar / sonraki faza hazırlık
+
+- Grafik iki nokta arasını çizgiyle bağlar; bu trend okumasıdır, günlük
+  gözlem değildir (tooltip gerçek zaman damgasını gösterir).
+- Sonraki faz: maliyet/fiyat öneri motoru (Decimal.js, break-even + 3 strateji).
