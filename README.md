@@ -249,3 +249,53 @@ CSV içe aktarma sihirbazı: ![CSV import](docs/screenshots/faz-2-products-impor
   önleme politikası).
 - Sonraki faz: provider sözleşmeleri, DemoProvider fixture'ları ve DataForSEO
   adaptör temeli.
+
+---
+
+## FAZ 3 — Provider katmanı ve DemoProvider
+
+**Durum:** ✅ Tamamlandı — `prompts/tests/TEST_03_PROVIDER_LAYER.md` kontrolleri geçti.
+
+### Yapılanlar
+
+- **Sözleşmeler:** `ProductResearchProvider` arayüzü, `ProviderCapabilities`
+  (Zod), `NormalizedOffer` (source, observed_at, URL, currency, is_demo alanları
+  zorunlu), `ProviderPricePoint`, hata taksonomisi
+  (`rate_limited | authentication | configuration | timeout | network | schema | unknown`).
+- **DemoProvider:** deterministik fixture seti — exact GTIN, MPN varyantı
+  (yanlış renk), muadil, stok adedi olan/olmayan (in_stock + adet yok),
+  kargo bilinmiyor (teslim toplamı uydurulmaz), out_of_stock, preorder,
+  bayat veri, geçmiş fiyat serisi, boş arama ve hata senaryosu.
+- **DataForSEO adaptörü:** task_post/task_get temel yaşam döngüsü, timeout
+  (AbortController), bounded retry + backoff, HTTP→hata eşleme
+  (429→rate_limited, 401/403→authentication), Zod yanıt şeması; anahtar
+  yoksa hiçbir canlı çağrı yapılmaz.
+- **Registry:** `runProviderSearch` paralel çalıştırır, hata kaynak bazında
+  izole edilir; `getProviderStatuses` anahtar DEĞERİ asla döndürmez.
+- **Log:** sanitised yapısal log (latency, kayıt sayısı, hata kind);
+  Basic auth ve anahtar benzeri diziler maskelenir.
+- **Arayüz:** Veri Kaynakları ekranı gerçek durumları gösterir
+  (Hazır/Kurulmadı + kapsam rozetleri + gerekli env adları).
+
+### Test sonuçları
+
+```
+npm run typecheck   → 0 hata
+npm run lint        → 0 hata
+npm test            → 56 test, 56 geçti (demo sözleşmesi, DataForSEO eşleme,
+                      hata izolasyonu, log sanitization)
+npm run build       → başarılı
+npm run test:e2e    → 20 test, 20 geçti (Veri Kaynakları ekranı + API sözleşmesi)
+```
+
+### Ekran görüntüsü
+
+Veri Kaynakları — sağlayıcı durumları (1440×900):
+![Veri Kaynakları](docs/screenshots/faz-3-data-sources-light.png)
+
+### Bilinen sınırlar / sonraki faza hazırlık
+
+- DataForSEO task polling döngüsü Faz 4 orkestratörüyle tamamlanacak
+  (mevcut sürüm tek adımlı temel akış + şema doğrulaması).
+- Sonraki faz: research_runs/offers/product_matches tabloları, orkestrasyon
+  (idempotency + partial success) ve exact/muadil eşleştirme motoru.

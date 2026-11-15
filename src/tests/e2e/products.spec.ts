@@ -57,9 +57,15 @@ test.describe("Faz 2 - ürün kataloğu yolculuğu", () => {
     await page.getByRole("button", { name: "Filtrele" }).click();
     await expect(page.getByRole("link", { name: `E2E Test Ürünü ${suffix}` })).toBeVisible();
 
-    // Arşivle: satır aktif listeden kaybolur, arşiv görünümünde geri yüklenir
+    // Arşivle: PATCH yanıtını bekle, satır aktif listeden kaybolur,
+    // arşiv görünümünde geri yüklenebilir.
+    const patchResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" && response.url().includes("/api/products/"),
+    );
     await page.getByRole("button", { name: "Arşivle" }).click();
-    await expect(page.getByRole("link", { name: `E2E Test Ürünü ${suffix}` })).toBeHidden();
+    const response = await patchResponse;
+    expect(response.status()).toBe(200);
     await page.goto("/products?archived=true");
     await expect(page.getByRole("link", { name: `E2E Test Ürünü ${suffix}` })).toBeVisible();
     await expect(page.getByRole("button", { name: "Geri yükle" }).first()).toBeVisible();
