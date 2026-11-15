@@ -19,7 +19,7 @@ export function AppSidebar({ user }: { user?: SidebarUser }) {
       className="hidden w-[248px] shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex"
     >
       <SidebarBrand />
-      <SidebarNav className="flex-1" />
+      <SidebarNav className="flex-1" isAdmin={user?.role === "admin"} />
       {user ? <SidebarSession email={user.email} role={user.role} /> : null}
       <SidebarFooter />
     </aside>
@@ -52,7 +52,7 @@ export function MobileSidebar({ user }: { user?: SidebarUser }) {
               <X className="size-4" aria-hidden />
             </DialogPrimitive.Close>
           </div>
-          <SidebarNav className="flex-1" />
+          <SidebarNav className="flex-1" isAdmin={user?.role === "admin"} />
           {user ? <SidebarSession email={user.email} role={user.role} /> : null}
           <SidebarFooter />
         </DialogPrimitive.Content>

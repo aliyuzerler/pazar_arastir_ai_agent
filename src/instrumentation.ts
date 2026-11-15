@@ -23,8 +23,11 @@ export async function register(): Promise<void> {
   }
   if (process.env.PROD_READY !== "true") {
     problems.push(
-      "PROD_READY=true olmadan üretim başlatılmaz: bu sürüm kimlik doğrulama İÇERMEZ; public deployment öncesi auth eklenmelidir (release gate).",
+      "PROD_READY=true olmadan üretim başlatılmaz: auth (Faz 10-12) eklendi; onay yine de bilinçli adım olarak zorunludur (release gate).",
     );
+  }
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET === "dev-session-secret-change-me") {
+    problems.push("SESSION_SECRET üretim için zorunludur ve geliştirme değeri kabul edilmez.");
   }
 
   if (problems.length > 0) {

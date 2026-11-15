@@ -593,21 +593,33 @@ npm run audit:bundle→ secret sızıntısı yok
 npm run test:e2e    → 31 test, 31 geçti
 ```
 
-### Vercel + yönetilen PostgreSQL dağıtımı
+### Vercel + yönetilen PostgreSQL dağıtımı (Faz 12 ile güncel)
 
 1. Neon/Vercel Postgres üzerinde bir veritabanı açın ve `DATABASE_URL`'i kopyalayın.
-2. Vercel proje ayarlarına env'leri girin: `APP_MODE=production`,
-   `DATABASE_URL`, `CRON_SECRET` (rastgele uzun değer), sağlayıcı anahtarları
-   (opsiyonel) ve **`PROD_READY=true`** (yalnızca auth eklendikten sonra).
-3. `vercel.json` içindeki cron tanımı `/api/cron/monitoring` ucunu 6 saatte bir
-   çağırır; uç `CRON_SECRET` ile korunur.
+2. Vercel proje ortam değişkenleri:
+
+| Değişken | Zorunlu | Not |
+| --- | --- | --- |
+| `APP_MODE` | ✅ | `production` |
+| `DATABASE_URL` | ✅ | Yönetilen PostgreSQL; varsayılan yerel parola kapı tarafından reddedilir |
+| `SESSION_SECRET` | ✅ | ≥16 karakter rastgele; geliştirme değeri reddedilir |
+| `CRON_SECRET` | ✅ | `/api/cron/monitoring` anahtarı |
+| `PROD_READY` | ✅ | `true` — bilinçli onay; auth Faz 10-12'de eklendi |
+| `APP_BASE_URL` | ✅ | Örn. `https://proje.vercel.app` (e-posta bağlantıları) |
+| `RESEND_API_KEY` | önerilir | Doğrulama/sıfırlama e-postaları; yoksa outbox'a yazılır |
+| `EMAIL_FROM` | opsiyonel | Örn. `Product Intelligence <panel@sirket.com>` |
+| `DB_DRIVER` | ✅ | `postgres` |
+| `PROVIDER_MODE` | opsiyonel | `demo` kalabilir; canlı anahtarlarla `live` |
+
+3. `vercel.json` cron tanımı `/api/cron/monitoring` ucunu 6 saatte bir çağırır.
 4. İlk deploy sonrası migration: `npm run db:migrate` (bir kez, yönetilen DB'ye).
 
 ### Release
 
-- Etiket: **v0.1.0-rc1**
-- Bilinen sınırlar: kullanıcı kaydı/auth yok (yerel mod), API rate limiting
-  uygulama içi yok, canlı sağlayıcılar anahtar eklenene kadar demo kalır.
+- Etiket: **v0.2.0-rc1** (v0.1.0-rc1: yerel mod sürümü)
+- Bilinen sınırlar: hız sınırı instance-yerel (dağıtık için Redis/Upstash
+  önerilir), oturum iptali çerez temizliğiyle (JWT doğal süresi 7 gün),
+  canlı sağlayıcılar anahtar eklenene kadar demo kalır.
 
 ---
 
@@ -692,3 +704,47 @@ npm run test:e2e    → 40 test, 40 geçti (kayıt→doğrulama→sıfırlama→
 
 Parolamı unuttum — istek alındı ekranı (DEMO bağlantı kutusuyla):
 ![Parola sıfırlama](docs/screenshots/faz-11-forgot-light.png)
+
+
+---
+
+## FAZ 12 — Admin paneli ve Vercel deployment hazırlığı
+
+**Durum:** ✅ Tamamlandı — `prompts/tests/TEST_12_ADMIN_AND_DEPLOY.md` kontrolleri geçti.
+
+### Yapılanlar
+
+- **Admin rolü ve paneli:** `/admin` (genel bakış: kullanıcı/workspace/ürün/
+  24s araştırma/aktif iş/e-posta sayıları), `/admin/users` (rol, aktiflik,
+  doğrulama aksiyonları; admin kendi hesabını kısıtlayamaz), `/admin/outbox`
+  (e-posta gönderim kayıtları; token değerleri gösterilmez).
+- **Admin API'leri:** `/api/admin/overview`, `/api/admin/users`,
+  `/api/admin/users/:id` — middleware rol kontrolü + DB tabanlı ikinci
+  savunma (`requireAdmin`).
+- **Menü:** "Yönetim" bağlantısı yalnızca admin rolünde görünür; admin
+  olmayan /admin girişi dashboard'a döner, API 403 verir.
+- **Üretim kapısı güncellendi:** SESSION_SECRET zorunluluğu eklendi
+  (geliştirme değeri reddedilir); PROD_READY onayı yine bilinçli adım.
+- **Ayarlar ekranı:** kimlik doğrulama kapısı "Tamam" olarak işaretlendi;
+  SESSION_SECRET satırı eklendi.
+- **E2E oturum altyapısı:** setup projesi admin storageState'i yazar;
+  tüm sayfa spec'leri oturumla çalışır (Faz 10'da kuruldu).
+
+### Test sonuçları
+
+```
+npm run typecheck   → 0 hata
+npm run lint        → 0 hata
+npm test            → 134 test, 134 geçti (admin koruması, kendi hesabını
+                      kilitleme koruması, genel bakış sayıları)
+npm run build       → başarılı
+npm run test:e2e    → 43 test, 43 geçti (admin akışları, 403 iddiası,
+                      admin dışı yönlendirme)
+```
+
+### Ekran görüntüleri
+
+| | |
+| --- | --- |
+| ![Admin genel bakış](docs/screenshots/faz-12-admin-light.png) | ![Kullanıcı yönetimi](docs/screenshots/faz-12-admin-users-light.png) |
+| Yönetim paneli — kiracı sayıları + e-posta kaydı | Kullanıcı yönetimi — rol/aktiflik/doğrulama aksiyonları |

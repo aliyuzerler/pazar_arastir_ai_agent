@@ -26,11 +26,17 @@ export default async function SettingsPage() {
   const cronConfigured =
     Boolean(env.CRON_SECRET) && env.CRON_SECRET !== "change-this-to-a-long-random-secret";
 
+  const sessionSecretSet = Boolean(process.env.SESSION_SECRET) && process.env.SESSION_SECRET !== "dev-session-secret-change-me";
   const gates = [
     {
       label: "Kimlik doğrulama / oturum yönetimi",
-      done: false,
-      note: "Bu sürüm tek kullanıcı yerel mod içindir; SaaS yayın öncesi zorunlu.",
+      done: true,
+      note: "Faz 10-12: kayıt, giriş, e-posta doğrulama, rol tabanlı admin paneli.",
+    },
+    {
+      label: "SESSION_SECRET tanımlı",
+      done: sessionSecretSet,
+      note: "Oturum çerezi bu anahtarla imzalanır; geliştirme değeri üretimde reddedilir.",
     },
     {
       label: "Yönetilen PostgreSQL bağlantısı",

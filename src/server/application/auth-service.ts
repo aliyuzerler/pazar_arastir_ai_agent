@@ -22,7 +22,15 @@ import { sendEmail, renderVerificationEmail, renderPasswordResetEmail } from "@/
 import { getEnv } from "@/lib/env";
 
 export class AuthError extends Error {
-  readonly code: "INVALID_CREDENTIALS" | "EMAIL_TAKEN" | "EMAIL_NOT_VERIFIED" | "ACCOUNT_DISABLED" | "VALIDATION_ERROR" | "TOKEN_INVALID";
+  readonly code:
+    | "INVALID_CREDENTIALS"
+    | "EMAIL_TAKEN"
+    | "EMAIL_NOT_VERIFIED"
+    | "ACCOUNT_DISABLED"
+    | "VALIDATION_ERROR"
+    | "TOKEN_INVALID"
+    | "FORBIDDEN"
+    | "NOT_FOUND";
 
   constructor(code: AuthError["code"], message: string) {
     super(message);

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Shield } from "lucide-react";
 
 import { NAV_ITEMS } from "@/components/layout/nav-items";
 import { cn } from "@/lib/utils";
@@ -9,10 +10,12 @@ import { cn } from "@/lib/utils";
 interface SidebarNavProps {
   onNavigate?: () => void;
   className?: string;
+  isAdmin?: boolean;
 }
 
-/** Gezinme listesi; aktif öğe aria-current ile de işaretlenir. */
-export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
+/** Gezinme listesi; aktif öğe aria-current ile de işaretlenir.
+ *  Admin öğesi yalnızca admin rolünde görünür. */
+export function SidebarNav({ onNavigate, className, isAdmin }: SidebarNavProps) {
   const pathname = usePathname();
 
   return (
@@ -41,21 +44,50 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
             </li>
           );
         })}
+        {isAdmin ? (
+          <li>
+            <Link
+              href="/admin"
+              onClick={onNavigate}
+              aria-current={pathname.startsWith("/admin") ? "page" : undefined}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                pathname.startsWith("/admin")
+                  ? "bg-sidebar-hover font-semibold text-sidebar-foreground"
+                  : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground",
+              )}
+              data-testid="admin-nav-link"
+            >
+              <Shield className="size-4 shrink-0" aria-hidden />
+              Yönetim
+              {pathname.startsWith("/admin") ? (
+                <span className="ml-auto size-1.5 rounded-full bg-accent" aria-hidden />
+              ) : null}
+            </Link>
+          </li>
+        ) : null}
       </ul>
     </nav>
   );
 }
 
+
+function BrandIcon() {
+  return (
+    <span className="grid size-7 place-items-center rounded-lg bg-accent text-accent-foreground">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+        <rect x="1.5" y="8" width="3" height="7" rx="0.8" />
+        <rect x="6.5" y="5" width="3" height="10" rx="0.8" />
+        <rect x="12" y="1" width="3" height="14" rx="0.8" />
+      </svg>
+    </span>
+  );
+}
+
 export function SidebarBrand() {
   return (
-    <div className="flex items-center gap-2 px-5 py-5">
-      <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-        <svg viewBox="0 0 16 16" className="size-4" aria-hidden fill="currentColor">
-          <rect x="1" y="9" width="3" height="6" rx="0.8" />
-          <rect x="6.5" y="5" width="3" height="10" rx="0.8" />
-          <rect x="12" y="1" width="3" height="14" rx="0.8" />
-        </svg>
-      </span>
+    <div className="flex items-center gap-2.5 px-5 py-4">
+      <BrandIcon />
       <div className="leading-tight">
         <p className="text-sm font-semibold">Product Intelligence</p>
         <p className="text-[11px] text-sidebar-muted">Pazar istihbarat paneli</p>
