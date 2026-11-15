@@ -4,7 +4,7 @@
 import { and, desc, eq } from "drizzle-orm";
 
 import type { AppDatabase } from "@/server/db/driver";
-import { offers, productMatches, type Offer, type ProductMatch } from "@/server/db/schema";
+import { offers, productMatches, products, type Offer, type ProductMatch } from "@/server/db/schema";
 import type { NormalizedOffer } from "@/server/providers/contracts";
 import type { MatchDecision } from "@/server/domain/matching";
 
@@ -53,6 +53,15 @@ export async function upsertOffer(
   productId: string,
   offer: NormalizedOffer,
 ): Promise<Offer> {
+  // Savunma katmanı: productId gerçekten bu workspace'e ait mi? (TEST_08)
+  const owner = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(and(eq(products.id, productId), eq(products.workspaceId, workspaceId)))
+    .limit(1);
+  if (!owner[0]) {
+    throw new Error("Ürün bu workspace'e ait değil; teklif yazılamaz.");
+  }
   const row = toOfferRow(workspaceId, productId, offer);
   const existing = await db
     .select()

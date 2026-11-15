@@ -28,7 +28,6 @@ async function tick(): Promise<void> {
 async function main(): Promise<void> {
   console.log(`Worker başladı (tick: ${TICK_SECONDS}s).`);
   let cycles = 0;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
       await tick();

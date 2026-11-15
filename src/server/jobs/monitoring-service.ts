@@ -116,7 +116,7 @@ export async function runMonitoringJob(db: AppDatabase, job: MonitoringJob): Pro
   const previousMedian = medianPrice(previousRows);
   const previousAvailability = previousRows[0]?.availabilityStatus ?? "unknown";
 
-  const { run } = await runResearch(db, job.workspaceId, product, {
+  await runResearch(db, job.workspaceId, product, {
     idempotencyKey: `monitor-${job.id}-${new Date().toISOString().slice(0, 13)}`, // saatlik idempotency
   });
   await incrementQuota(db, job.workspaceId, "demo");

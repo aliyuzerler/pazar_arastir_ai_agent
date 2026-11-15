@@ -78,7 +78,7 @@ işaretlenir.
 | 5 | Fiyat geçmişi ve stok gözlemleri | ✅ Tamamlandı |
 | 6 | Fiyatlandırma öneri motoru | ✅ Tamamlandı |
 | 7 | İzleme, zamanlanmış işler, uyarılar | ✅ Tamamlandı |
-| 8 | SaaS-ready tenancy ve Vercel hazırlığı | ⏳ Sırada |
+| 8 | SaaS-ready tenancy ve Vercel hazırlığı | ✅ Tamamlandı |
 | 9 | Hardening ve release candidate | ⏳ Sırada |
 
 ---
@@ -500,3 +500,43 @@ Fiyat İzleme — iş tablosu ve etkinlik akışı (1440×900):
 
 - Uyarı eşiği ürün bazında yapılandırma Faz 8'de ayarlara bağlanacak.
 - Sonraki faz: SaaS-ready workspace izolasyon denetimi ve Vercel deploy gate.
+
+---
+
+## FAZ 8 — SaaS-ready tenancy ve Vercel deployment readiness
+
+**Durum:** ✅ Tamamlandı — `prompts/tests/TEST_08_SAAS_READINESS_AND_DEPLOYMENT.md`
+kontrolleri geçti.
+
+### Yapılanlar
+
+- **Workspace izolasyon denetimi (regresyon testi):** TÜM repository
+  fonksiyonları (ürün CRUD, teklif/eşleşme, araştırma geçmişi, öneriler,
+  izleme işleri, etkinlikler) yanlış workspace ile çağrıldığında boş döner.
+  Denetim gerçek bir açık yakaladı: `upsertOffer` productId sahipliğini
+  doğrulamıyordu → savunma katmanı eklendi (workspace + ürün eşleşmesi
+  zorunlu; yoksa yazma reddedilir).
+- **Üretim başlangıç kapısı (`src/instrumentation.ts`):** APP_MODE=production
+  iken (1) varsayılan yerel DB parolası reddedilir, (2) CRON_SECRET zorunlu,
+  (3) PROD_READY=true yoksa sunucu kasıtlı olarak BAŞLAMAZ — auth olmadan
+  public deployment bilinçli olarak engellenir.
+- **Ayarlar sayfası:** workspace bilgisi, çalışma modu (yerel/üretim), DB
+  sürücü, kota; SaaS yayın kapısı listesi (tamam/bekliyor rozetleri) — secret
+  DEĞERİ gösterilmez (E2E iddiası var).
+- **Vercel yapılandırması:** `vercel.json` — `/api/cron/monitoring` 6 saatlik
+  cron; yönetilen PostgreSQL + Neon yönlendirmesi dokümanda (docs/09).
+
+### Test sonuçları
+
+```
+npm run typecheck   → 0 hata
+npm run lint        → 0 hata
+npm test            → 111 test, 111 geçti (izolasyon denetimi dahil)
+npm run build       → başarılı
+npm run test:e2e    → 30 test, 30 geçti (ayarlar ekranı + secret sızmama iddiası)
+```
+
+### Ekran görüntüsü
+
+Ayarlar — çalışma alanı, mod ve release gate (1440×900):
+![Ayarlar](docs/screenshots/faz-8-settings-light.png)
