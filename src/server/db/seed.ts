@@ -5,6 +5,7 @@ import "dotenv/config";
 
 import { getEnv } from "@/lib/env";
 import { createDb, type DbDriver } from "./driver";
+import { ensureSampleProducts } from "./sample-products";
 import { ensureDefaultWorkspace } from "./seeding";
 
 async function main(): Promise<void> {
@@ -16,6 +17,13 @@ async function main(): Promise<void> {
     result.created
       ? `Default workspace oluşturuldu (${result.slug}, id: ${result.workspaceId}).`
       : `Default workspace zaten mevcut (${result.slug}); seed idempotent.`,
+  );
+
+  const created = await ensureSampleProducts(db, result.workspaceId);
+  console.log(
+    created > 0
+      ? `${created} örnek ürün eklendi (DEMO katalog).`
+      : "Örnek ürünler zaten mevcut; seed idempotent.",
   );
   process.exit(0);
 }

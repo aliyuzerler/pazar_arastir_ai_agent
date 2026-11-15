@@ -72,7 +72,7 @@ işaretlenir.
 | --- | --- | --- |
 | 0 | Repository bootstrap, PostgreSQL, app shell | ✅ Tamamlandı |
 | 1 | Premium monochrome UI shell | ✅ Tamamlandı |
-| 2 | Ürün kataloğu ve maliyet girdileri | ⏳ Sırada |
+| 2 | Ürün kataloğu ve maliyet girdileri | ✅ Tamamlandı |
 | 3 | Provider katmanı + DemoProvider | ⏳ Sırada |
 | 4 | Araştırma orkestrasyonu + eşleştirme | ⏳ Sırada |
 | 5 | Fiyat geçmişi ve stok gözlemleri | ⏳ Sırada |
@@ -191,3 +191,61 @@ Mobil (390×844, tam sayfa): ![Dashboard mobile](docs/screenshots/faz-1-dashboar
 - Sonraki faz: ürün kataloğu (products + pricing_profiles şeması, CRUD API,
   CSV içe aktarma).
 
+
+---
+
+## FAZ 2 — Ürün kataloğu ve maliyet girdileri
+
+**Durum:** ✅ Tamamlandı — `prompts/tests/TEST_02_PRODUCTS_CATALOG.md` kontrolleri geçti.
+
+### Yapılanlar
+
+- **Şema:** `products` (kimlik + maliyet girdileri + özellikler + izleme alanları)
+  ve `pricing_profiles` tabloları, workspace FK, `workspace+SKU` unique index,
+  GTIN index; migration `drizzle/0001`.
+- **GTIN doğrulama:** GS1 kontrol hanesi (GTIN-8/12/13/14), ayraç temizliği,
+  14 haneye kanonikleştirme — orijinal değer korunur.
+- **Doğrulama (Zod):** Türkçe mesajlar; negatif maliyet, bozuk onluk metin
+  ("1.299,90" kabul edilir), hatalı ISO para birimi, https dışı URL reddedilir.
+- **Repository/Servis:** tüm sorgular workspace kapsamlı; SKU/GTIN mükerrer
+  kontrolü; arşivle/geri yükle (soft delete); liste filtreleri (arama, kategori,
+  izleme), sıralama ve sayfalama (maks 100).
+- **API:** `GET/POST /api/products`, `GET/PATCH/DELETE /api/products/:id`
+  (update|archive|restore eylemleri), `POST /api/products/import`
+  (dryRun önizleme / kalıcı içe aktarma) — ortak zarf + request id.
+- **CSV içe aktarma:** TR/EN başlık takma adları, önizlemede satır bazlı hata
+  raporu, yalnızca geçerli satırlar kaydedilir; 500 satır / 512 KB limiti;
+  formül enjeksiyonu nötralizasyonu dışa aktarım için hazır (`neutralizeCsvCell`).
+- **Arayüz:** ürün listesi (filtre/sıralama/sayfalama + arşiv görünümü),
+  ürün ekle/düzenle formu (alan bazlı hata gösterimi), ürün detay
+  (bilgiler + maliyet özeti), CSV içe aktarma sihirbazı; örnek ürün seed'i
+  (`npm run db:seed` ile idempotent).
+
+### Test sonuçları
+
+```
+npm run typecheck   → 0 hata
+npm run lint        → 0 hata, 0 uyarı
+npm test            → 41 test, 41 geçti (GTIN, doğrulama, CSV, workspace izolasyonu,
+                      CRUD yaşam döngüsü, CSV içe aktarma — pglite üzerinde)
+npm run build       → 13 rota, başarılı
+npm run test:e2e    → 18 test, 18 geçti (ürün oluşturma → arşiv akışı,
+                      CSV önizleme/içe aktarma, doğrulama hataları, mobil form)
+```
+
+### Ekran görüntüleri
+
+| | |
+| --- | --- |
+| ![Ürün listesi](docs/screenshots/faz-2-products-light.png) | ![Ürün formu](docs/screenshots/faz-2-products-new-light.png) |
+| Ürün listesi — filtreler, maliyet, arşiv aksiyonu (1440×900) | Ürün ekle formu — kimlik, maliyet, özellikler |
+
+CSV içe aktarma sihirbazı: ![CSV import](docs/screenshots/faz-2-products-import-light.png)
+
+### Bilinen sınırlar / sonraki faza hazırlık
+
+- Fiyatlandırma profili formu Faz 6'da eklenecek (şema ve doğrulama hazır).
+- Ürün silme kalıcı değildir; yalnızca arşiv/geri yükleme vardır (veri kaybı
+  önleme politikası).
+- Sonraki faz: provider sözleşmeleri, DemoProvider fixture'ları ve DataForSEO
+  adaptör temeli.
