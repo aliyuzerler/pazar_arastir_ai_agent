@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 /** GET /api/monitoring — işler + etkinlik akışı. */
 export async function GET(request: NextRequest) {
   const requestId = getRequestId(request);
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const [jobs, alertRows] = await Promise.all([
     listJobsWithProducts(db, workspace.id),

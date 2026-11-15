@@ -38,7 +38,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     );
   }
 
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const match = await reviewMatch(db, workspace.id, id, parsed.data.decision);
   if (!match) {

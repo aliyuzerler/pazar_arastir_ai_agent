@@ -608,3 +608,50 @@ npm run test:e2e    → 31 test, 31 geçti
 - Etiket: **v0.1.0-rc1**
 - Bilinen sınırlar: kullanıcı kaydı/auth yok (yerel mod), API rate limiting
   uygulama içi yok, canlı sağlayıcılar anahtar eklenene kadar demo kalır.
+
+---
+
+## FAZ 10 — Kimlik doğrulama altyapısı (kayıt / giriş / oturum)
+
+**Durum:** ✅ Tamamlandı — `prompts/tests/TEST_10_AUTHENTICATION.md` kontrolleri geçti.
+
+### Yapılanlar
+
+- **users + auth_tokens + email_outbox şemaları:** her kullanıcı kendi
+  workspace'ine sahiptir (SaaS çok kiracılılık başlar); rol alanı (user|admin)
+  admin paneline zemin hazırlar.
+- **Parola güvenliği:** bcryptjs (sunucusuz uyumlu), politika: ≥10 karakter +
+  büyük/küçük harf + rakam (birim testli).
+- **Oturum:** httpOnly + SameSite=Lax çerezde HS256 JWT (jose, edge uyumlu).
+  Middleware (`src/middleware.ts`) kenar katmanında imzayı doğrular; kullanıcı
+  geçerliliği (aktif hesap, workspace) her istekte DB'den teyit edilir.
+- **Uçlar:** `/api/auth/register` (kullanıcı + workspace + doğrulama maili),
+  `/api/auth/login` (çerez koyar), `/api/auth/logout`, `/api/auth/me`.
+  Auth uçlarında IP başına hız sınırı (dakikada 5-10).
+- **Koruma matrisi:** korumalı sayfa → `/login?next=…` yönlendirme; korumalı
+  API → 401 zarfı; `/admin` → admin olmayan 403. Cron ucu kendi secret'ıyla
+  public kalır.
+- **Workspace bağlamı:** `resolveWorkspaceContext` artık oturum üyeliğinden
+  çözülür (tarayıcıdan workspace id ASLA güvenilmez); 23 çağrı noktası geçildi.
+- **E2E altyapısı:** Playwright setup projesi admin oturumunu storageState'e
+  yazar; mevcut 31 spec oturumla çalışır, 6 yeni auth spec eklenir.
+  E2E admin: `admin@demo.local / Demo!23456` (global-setup idempotent seed).
+
+### Test sonuçları
+
+```
+npm run typecheck   → 0 hata
+npm run lint        → 0 hata
+npm test            → 126 test, 126 geçti (parola politikası, JWT, kayıt/
+                      doğrulama/giriş akışı, token tek kullanımlılık)
+npm run build       → başarılı
+npm run test:e2e    → 37 test, 37 geçti (yönlendirme, 401, kayıt→doğrulama→
+                      giriş, yanlış parola, çıkış)
+```
+
+### Ekran görüntüleri
+
+| | |
+| --- | --- |
+| ![Giriş](docs/screenshots/faz-10-login-light.png) | ![Kayıt sonrası](docs/screenshots/faz-10-register-success-light.png) |
+| Giriş ekranı (1440×900) | Kayıt sonrası doğrulama adımı (DEMO bağlantı kutusu) |

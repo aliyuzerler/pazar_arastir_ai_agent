@@ -7,3 +7,4 @@ export * from "./product-matches";
 export * from "./price-observations";
 export * from "./pricing-recommendations";
 export * from "./monitoring";
+export * from "./auth";

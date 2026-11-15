@@ -34,7 +34,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function GET(request: NextRequest, context: RouteContext) {
   const requestId = getRequestId(request);
   const { id } = await context.params;
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const product = await getProduct(db, workspace.id, id);
   if (!product) {
@@ -69,7 +69,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     );
   }
 
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
 
   try {
@@ -104,7 +104,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 export async function DELETE(request: NextRequest, context: RouteContext) {
   const requestId = getRequestId(request);
   const { id } = await context.params;
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const product = await archiveProduct(db, workspace.id, id);
   if (!product) {

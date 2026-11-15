@@ -19,7 +19,7 @@ const SORT_FIELDS: ProductSortField[] = ["title", "unitCost", "createdAt", "upda
 export async function GET(request: NextRequest) {
   const requestId = getRequestId(request);
   try {
-    const workspace = await resolveWorkspaceContext();
+    const { workspace } = await resolveWorkspaceContext();
     const sp = request.nextUrl.searchParams;
 
     const sortParam = sp.get("sort");
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const input = parseProductInput(body);
-    const workspace = await resolveWorkspaceContext();
+    const { workspace } = await resolveWorkspaceContext();
     const db = getDb();
     const product = await createProductChecked(db, workspace.id, input);
     return apiOk(product, { requestId, dataMode: currentDataMode(), status: 201 });

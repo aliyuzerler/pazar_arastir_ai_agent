@@ -19,8 +19,19 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "chromium",
+      name: "setup",
+      testMatch: /auth\.setup\.ts/,
       use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        // Korunan sayfalar bu oturumla açılır; auth sayfaları kendi spec'lerinde
+        // temiz bağlam ({ storageState: undefined }) kullanır.
+        storageState: "test-results/.auth/admin.json",
+      },
+      dependencies: ["setup"],
     },
   ],
   webServer: {

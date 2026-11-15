@@ -10,11 +10,20 @@
 import { mkdirSync } from "node:fs";
 
 import { PGlite } from "@electric-sql/pglite";
+import bcryptjs from "bcryptjs";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
+import { eq } from "drizzle-orm";
 
-import { monitoringJobs, products, workspaces } from "../../server/db/schema";
+import { monitoringJobs, products, users, workspaces } from "../../server/db/schema";
 import { ensureSampleProducts } from "../../server/db/sample-products";
+
+/** E2E admin hesabı: tüm sayfa testleri bu oturumla çalışır. */
+export const E2E_ADMIN = {
+  email: "admin@demo.local",
+  password: "Demo!23456",
+  displayName: "E2E Yönetici",
+};
 
 export default async function globalSetup(): Promise<void> {  process.env.DB_DRIVER = "pglite";
   process.env.PG_LITE_DATA_DIR = process.env.PG_LITE_DATA_DIR ?? "/tmp/product-intel-e2e-pgdata";
@@ -66,6 +75,26 @@ export default async function globalSetup(): Promise<void> {  process.env.DB_DRI
         frequencyHours: 24,
       })
       .onConflictDoNothing();
+  }
+
+  // E2E admin kullanıcısı (doğrulanmış, admin rolü) — idempotent; workspace
+  // yeniden oluşturulduysa bağlantı güncellenir.
+  const existingAdmin = await db.select().from(users).where(eq(users.email, E2E_ADMIN.email)).limit(1);
+  if (!existingAdmin[0]) {
+    await db.insert(users).values({
+      workspaceId,
+      email: E2E_ADMIN.email,
+      passwordHash: bcryptjs.hashSync(E2E_ADMIN.password, 10),
+      displayName: E2E_ADMIN.displayName,
+      role: "admin",
+      isActive: true,
+      emailVerified: true,
+    });
+  } else if (existingAdmin[0].workspaceId !== workspaceId) {
+    await db
+      .update(users)
+      .set({ workspaceId, updatedAt: new Date() })
+      .where(eq(users.id, existingAdmin[0].id));
   }
 
   await client.close();

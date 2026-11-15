@@ -67,8 +67,8 @@ export function SidebarBrand() {
 export function SidebarFooter() {
   return (
     <div className="border-t border-white/10 px-5 py-4 text-[11px] leading-relaxed text-sidebar-muted">
-      <p>Yerel mod · Tek kullanıcı</p>
-      <p>Kimlik doğrulama bu sürümde bulunmaz.</p>
+      <p>Oturum: oturum çereziyle korunur.</p>
+      <p>Yerel mod · DEMO veri etiketleriyle sunulur.</p>
     </div>
   );
 }

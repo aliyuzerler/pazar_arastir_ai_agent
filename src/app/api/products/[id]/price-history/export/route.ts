@@ -25,7 +25,7 @@ function csvLine(cells: (string | number | null)[]): string {
 export async function GET(request: NextRequest, context: RouteContext) {
   const requestId = getRequestId(request);
   const { id } = await context.params;
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const product = await getProduct(db, workspace.id, id);
   if (!product) {

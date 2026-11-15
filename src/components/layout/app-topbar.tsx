@@ -26,7 +26,7 @@ function applyTheme(theme: Theme) {
  * Üst bar: menü (mobil), sayfa başlığı, arama yer tutucusu, yeni araştırma
  * CTA'sı, sağlayıcı sağlığı ve tema düğmesi.
  */
-export function AppTopbar() {
+export function AppTopbar({ user }: { user?: { email: string; role: string } }) {
   const pathname = usePathname();
   const navItem = findNavItem(pathname);
   const [theme, setTheme] = useState<Theme>("light");
@@ -46,7 +46,7 @@ export function AppTopbar() {
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b border-border-subtle bg-surface px-4 md:px-6">
-      <MobileSidebar />
+      <MobileSidebar user={user} />
 
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">{navItem.label}</p>

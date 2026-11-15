@@ -19,7 +19,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function GET(request: NextRequest, context: RouteContext) {
   const requestId = getRequestId(request);
   const { id } = await context.params;
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const run = await getResearchRun(db, workspace.id, id);
   if (!run) {

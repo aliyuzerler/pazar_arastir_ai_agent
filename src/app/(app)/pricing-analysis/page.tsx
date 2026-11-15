@@ -21,7 +21,7 @@ function rateLabel(rate: string): string {
 }
 
 export default async function PricingAnalysisPage() {
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const profiles = await listProfiles(db, workspace.id);
 

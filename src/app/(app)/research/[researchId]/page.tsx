@@ -133,7 +133,7 @@ interface ResearchResultPageProps {
 
 export default async function ResearchResultPage({ params }: ResearchResultPageProps) {
   const { researchId } = await params;
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const run = await getResearchRun(db, workspace.id, researchId);
   if (!run) notFound();

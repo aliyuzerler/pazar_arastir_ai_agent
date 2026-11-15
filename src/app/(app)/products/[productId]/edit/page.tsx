@@ -15,7 +15,7 @@ interface EditProductPageProps {
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
   const { productId } = await params;
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const product = await getProduct(db, workspace.id, productId);
   if (!product) notFound();

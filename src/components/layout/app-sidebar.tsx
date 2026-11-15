@@ -4,9 +4,15 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Menu, X } from "lucide-react";
 
 import { SidebarBrand, SidebarFooter, SidebarNav } from "@/components/layout/sidebar-nav";
+import { SidebarSession } from "@/features/auth/sidebar-session";
+
+interface SidebarUser {
+  email: string;
+  role: string;
+}
 
 /** Masaüstü sabit menü. */
-export function AppSidebar() {
+export function AppSidebar({ user }: { user?: SidebarUser }) {
   return (
     <aside
       data-testid="app-sidebar"
@@ -14,13 +20,14 @@ export function AppSidebar() {
     >
       <SidebarBrand />
       <SidebarNav className="flex-1" />
+      {user ? <SidebarSession email={user.email} role={user.role} /> : null}
       <SidebarFooter />
     </aside>
   );
 }
 
 /** Mobil/tablet çekmece menüsü (<1024px). */
-export function MobileSidebar() {
+export function MobileSidebar({ user }: { user?: SidebarUser }) {
   return (
     <DialogPrimitive.Root>
       <DialogPrimitive.Trigger asChild>
@@ -46,6 +53,7 @@ export function MobileSidebar() {
             </DialogPrimitive.Close>
           </div>
           <SidebarNav className="flex-1" />
+          {user ? <SidebarSession email={user.email} role={user.role} /> : null}
           <SidebarFooter />
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

@@ -49,7 +49,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const page = Math.max(Number(param(sp.page) || "1"), 1);
   const pageSize = 20;
 
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const { items, total } = await listProducts(db, workspace.id, {
     query: query || undefined,

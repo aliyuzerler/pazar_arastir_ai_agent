@@ -43,7 +43,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return serviceErrorResponse({ code: "VALIDATION_ERROR", message: "İstek alanları geçersiz." }, requestId);
   }
 
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const product = await getProduct(db, workspace.id, id);
   if (!product) {
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 export async function GET(request: NextRequest, context: RouteContext) {
   const requestId = getRequestId(request);
   const { id } = await context.params;
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const product = await getProduct(db, workspace.id, id);
   if (!product) {

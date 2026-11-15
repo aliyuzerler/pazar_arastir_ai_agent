@@ -42,7 +42,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       requestId,
     );
   }
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const profile = await updateProfile(db, workspace.id, id, {
     ...parsed.data,

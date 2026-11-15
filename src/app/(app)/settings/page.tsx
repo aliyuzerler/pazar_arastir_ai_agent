@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function SettingsPage() {
   const env = getEnv();
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const isLocal = env.APP_MODE === "local";
   const prodReady = process.env.PROD_READY === "true";
   const cronConfigured =

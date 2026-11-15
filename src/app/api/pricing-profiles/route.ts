@@ -19,7 +19,7 @@ const CREATE_SCHEMA = pricingProfileInputSchema.extend({ isDefault: z.boolean().
 /** GET /api/pricing-profiles — workspace profilleri. */
 export async function GET(request: NextRequest) {
   const requestId = getRequestId(request);
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const profiles = await listProfiles(db, workspace.id);
   return apiOk({ profiles }, { requestId, dataMode: currentDataMode() });
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       requestId,
     );
   }
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const profile = await createProfile(db, workspace.id, {
     name: parsed.data.name,

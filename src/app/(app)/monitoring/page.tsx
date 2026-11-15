@@ -41,7 +41,7 @@ const ALERT_TYPE_LABELS: Record<string, { label: string; variant: "success" | "w
 };
 
 export default async function MonitoringPage() {
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const jobs = await listJobsWithProducts(db, workspace.id);
   const alertRows = await listAlerts(db, workspace.id);

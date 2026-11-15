@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const workspace = await resolveWorkspaceContext();
+    const { workspace } = await resolveWorkspaceContext();
     const db = getDb();
     const product = await getProduct(db, workspace.id, parsed.data.productId);
     if (!product) {

@@ -28,7 +28,7 @@ const STATUS_LABELS: Record<string, { label: string; variant: "success" | "warni
 };
 
 export default async function ResearchPage() {
-  const workspace = await resolveWorkspaceContext();
+  const { workspace } = await resolveWorkspaceContext();
   const db = getDb();
   const runs = await listResearchRuns(db, workspace.id, undefined, 30);
 

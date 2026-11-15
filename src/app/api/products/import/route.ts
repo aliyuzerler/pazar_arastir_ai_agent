@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const workspace = await resolveWorkspaceContext();
+    const { workspace } = await resolveWorkspaceContext();
     if (parsed.data.dryRun) {
       const preview = previewCsvImport(parsed.data.csv);
       return apiOk(preview, { requestId, dataMode: currentDataMode() });
