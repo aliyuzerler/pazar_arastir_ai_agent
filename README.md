@@ -73,7 +73,7 @@ işaretlenir.
 | 0 | Repository bootstrap, PostgreSQL, app shell | ✅ Tamamlandı |
 | 1 | Premium monochrome UI shell | ✅ Tamamlandı |
 | 2 | Ürün kataloğu ve maliyet girdileri | ✅ Tamamlandı |
-| 3 | Provider katmanı + DemoProvider | ⏳ Sırada |
+| 3 | Provider katmanı + DemoProvider | ✅ Tamamlandı |
 | 4 | Araştırma orkestrasyonu + eşleştirme | ⏳ Sırada |
 | 5 | Fiyat geçmişi ve stok gözlemleri | ⏳ Sırada |
 | 6 | Fiyatlandırma öneri motoru | ⏳ Sırada |
