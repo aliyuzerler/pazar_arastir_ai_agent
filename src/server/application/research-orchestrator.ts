@@ -15,11 +15,16 @@ import {
   type MatchDecision,
 } from "@/server/domain/matching";
 import { upsertMatch, upsertOffer } from "@/server/db/repositories/offer-repository";
+import { recordObservationsFromResearch } from "@/server/application/price-history-service";
 import {
   createProviders,
   runProviderSearch,
 } from "@/server/providers/registry";
-import type { ProviderProductContext } from "@/server/providers/contracts";
+import type {
+  NormalizedOffer,
+  ProviderPricePoint,
+  ProviderProductContext,
+} from "@/server/providers/contracts";
 
 export function buildQueryPlan(product: Product): string[] {
   const queries: string[] = [];
@@ -109,6 +114,9 @@ export async function runResearch(
   let exact = 0;
   let substitutes = 0;
   const providerErrors: { providerId: string; kind: string; message: string }[] = [];
+  const offerRowIds = new Map<string, string>();
+  const collectedOffers: NormalizedOffer[] = [];
+  const collectedHistory: ProviderPricePoint[] = [];
 
   for (const outcome of outcomes) {
     if (outcome.error) {
@@ -118,6 +126,8 @@ export async function runResearch(
     const result = outcome.result!;
     for (const offer of result.offers) {
       const upserted = await upsertOffer(db, workspaceId, product.id, offer);
+      offerRowIds.set(offer.providerOfferId, upserted.id);
+      collectedOffers.push(offer);
       const decision: MatchDecision = classifyOffer(
         toProviderContext(product),
         offer,
@@ -127,7 +137,18 @@ export async function runResearch(
       if (decision.matchType === "exact") exact += 1;
       if (decision.matchType === "substitute") substitutes += 1;
     }
+    collectedHistory.push(...result.historicalPrices);
   }
+
+  // Her başarılı koşu fiyat/bulunabilirlik gözlemi üretir (dedupe ile).
+  await recordObservationsFromResearch(
+    db,
+    workspaceId,
+    product.id,
+    collectedOffers,
+    offerRowIds,
+    collectedHistory,
+  );
 
   const succeeded = outcomes.filter((outcome) => !outcome.error).length;
   const status = succeeded === 0 ? "failed" : succeeded === outcomes.length ? "completed" : "partial";

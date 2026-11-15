@@ -14,7 +14,7 @@ import type {
 } from "./contracts";
 import { ProviderError } from "./contracts";
 import { createDemoProvider } from "./demo/demo-provider";
-import { createDataForSeoProvider, isDataForSeoConfigured } from "./dataforseo/dataforseo-provider";
+import { createDataForSeoProvider } from "./dataforseo/dataforseo-provider";
 
 /** Tüm bilinen sağlayıcılar (demo daima ilk sırada). */
 export function createProviders(): ProductResearchProvider[] {

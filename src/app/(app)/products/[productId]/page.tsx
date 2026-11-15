@@ -15,6 +15,9 @@ import { EmptyState } from "@/components/feedback/empty-state";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { ProductArchiveButton } from "@/features/products/product-archive-button";
 import { ResearchLauncher } from "@/features/research/research-launcher";
+import { PriceHistorySection } from "@/features/pricing/price-history-section";
+import { listObservations } from "@/server/application/price-history-service";
+import { computePriceStats, type PricePoint } from "@/server/domain/price-history";
 import { getDb } from "@/server/db/driver";
 import { getProduct } from "@/server/db/repositories/product-repository";
 import { resolveWorkspaceContext } from "@/server/security/workspace-context";
@@ -32,6 +35,18 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const product = await getProduct(db, workspace.id, productId);
 
   if (!product) notFound();
+
+  const series = await listObservations(db, workspace.id, product.id);
+  const toPoints = (rows: typeof series.ourSnapshots): PricePoint[] =>
+    rows.map((row) => ({
+      observedAt: row.observedAt.toISOString(),
+      priceAmount: row.priceAmount,
+      currency: row.currency,
+      availabilityStatus: row.availabilityStatus,
+      stockQuantity: row.stockQuantity,
+    }));
+  const ourStats = computePriceStats(toPoints(series.ourSnapshots));
+  const providerStats = computePriceStats(toPoints(series.providerHistory));
 
   const facts: { label: string; value: string }[] = [
     { label: "Marka", value: product.brand ?? "Bilgi yok" },
@@ -153,6 +168,15 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           />
         </CardContent>
       </Card>
+
+      <PriceHistorySection
+        productId={product.id}
+        currency={product.currency}
+        ourSnapshots={series.ourSnapshots}
+        providerHistory={series.providerHistory}
+        ourStats={ourStats}
+        providerStats={providerStats}
+      />
     </section>
   );
 }
