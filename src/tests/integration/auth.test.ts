@@ -27,6 +27,8 @@ beforeAll(async () => {
   await runMigrations(db, "pglite");
   await db.delete(users);
   await db.delete(workspaces);
+  // Outbox FK'sız birikir; koşu öncesi temizle.
+  await db.delete(emailOutbox);
 });
 
 afterAll(async () => {
@@ -121,7 +123,9 @@ describe("auth akışı", () => {
     // Token değerini e-posta gövdesinden çıkar (outbox'ta URL şifresiz taşınır)
     const mails = await db.select().from(emailOutbox).where(eq(emailOutbox.toEmail, "uye@example.com"));
     const resetMail = mails.find((mail) => mail.kind === "password_reset");
-    const tokenMatch = resetMail?.bodyHtml.match(/token=([a-f0-9]+)/);
+    // Sıfırlama bağlantısı doğru sayfaya işaret etmeli (Türkçe harf toleranssız)
+    expect(resetMail?.bodyHtml).toContain("/reset-password?token=");
+    const tokenMatch = resetMail?.bodyHtml.match(/reset-password\?token=([a-f0-9]+)/);
     expect(tokenMatch).not.toBeNull();
 
     await resetPassword(db, tokenMatch![1], "YeniParola123");

@@ -655,3 +655,40 @@ npm run test:e2e    → 37 test, 37 geçti (yönlendirme, 401, kayıt→doğrula
 | --- | --- |
 | ![Giriş](docs/screenshots/faz-10-login-light.png) | ![Kayıt sonrası](docs/screenshots/faz-10-register-success-light.png) |
 | Giriş ekranı (1440×900) | Kayıt sonrası doğrulama adımı (DEMO bağlantı kutusu) |
+
+---
+
+## FAZ 11 — E-posta doğrulama ve parola sıfırlama
+
+**Durum:** ✅ Tamamlandı — `prompts/tests/TEST_11_EMAIL_VERIFICATION.md` kontrolleri geçti.
+
+### Yapılanlar
+
+- **Doğrulama akışı:** kayıt → doğrulama e-postası → `/verify-email?token=…`
+  → tek kullanımlık token harcanır → giriş açılır. Doğrulanmamış hesap
+  giriş yapamaz (403 + yeniden gönderme yolu).
+- **Parola sıfırlama:** `/forgot-password` → her koşulda aynı bilgilendirme
+  (kullanıcı varlığı sızdırılmaz) → `/reset-password?token=…` (1 saat, tek
+  kullanımlık) → parola güncellenir, eski parola geçersiz kalır.
+- **E-posta taşıyıcısı:** `email_outbox` tablosu + RESEND_API_KEY varsa
+  gerçek gönderim (HTTP API); yerel modda bağlantılar DEMO kutusunda
+  gösterilir ve outbox admin panelinden izlenir (Faz 12).
+- **Hız sınırı:** auth uçlarında IP başına sabit pencere sınırı (birim testli).
+  Serverless'ta instance-yerel olduğu dokümante edildi (dağıtık için Redis).
+- **Yakalanan hata:** E2E yol iddiası, sıfırlama bağlantısının yanlış sayfaya
+  (/verify-email) işaret ettiğini buldu; motor düzeltildi ve entegrasyon
+  testi yol iddiasıyla sıkılaştırıldı.
+
+### Test sonuçları
+
+```
+npm test            → 129 test, 129 geçti (token türü/süre/tek kullanım,
+                      sessiz çıkış, hız sınırı)
+npm run test:e2e    → 40 test, 40 geçti (kayıt→doğrulama→sıfırlama→giriş
+                      tam akışı, geçersiz belirteç, token'sız sayfa)
+```
+
+### Ekran görüntüsü
+
+Parolamı unuttum — istek alındı ekranı (DEMO bağlantı kutusuyla):
+![Parola sıfırlama](docs/screenshots/faz-11-forgot-light.png)

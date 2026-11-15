@@ -138,7 +138,10 @@ async function issueTokenAndNotify(
     expiresAt: new Date(Date.now() + hours * 3_600_000),
   });
   const env = getEnv();
-  const url = `${env.APP_BASE_URL}/verify-email?token=${token}`;
+  // Her token türü kendi sayfasına gider; sıfırlama bağlantısı asla
+  // doğrulama sayfasına işaret etmez (TEST_11 E2E yol iddiası).
+  const path = type === "email_verification" ? "/verify-email" : "/reset-password";
+  const url = `${env.APP_BASE_URL}${path}?token=${token}`;
   await sendEmail(db, {
     to: user.email,
     kind: type === "email_verification" ? "verification" : "password_reset",
