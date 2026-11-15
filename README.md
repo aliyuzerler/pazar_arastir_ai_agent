@@ -80,6 +80,9 @@ işaretlenir.
 | 7 | İzleme, zamanlanmış işler, uyarılar | ✅ Tamamlandı |
 | 8 | SaaS-ready tenancy ve Vercel hazırlığı | ✅ Tamamlandı |
 | 9 | Hardening ve release candidate | ✅ Tamamlandı |
+| 10 | Kimlik doğrulama altyapısı (kayıt/giriş/oturum) | ✅ Tamamlandı |
+| 11 | E-posta doğrulama ve parola sıfırlama | ✅ Tamamlandı |
+| 12 | Admin paneli ve Vercel deployment hazırlığı | ✅ Tamamlandı |
 
 ---
 
