@@ -9,17 +9,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  RecentResearchCard,
+  ResearchCtaCard,
+  SourceStatusCard,
+} from "@/features/dashboard/widgets";
 
 /**
- * Faz 0 dashboard iskeleti: yer tutucu KPI şeridi ve boş durum kartları.
- * Sahte KPI veya uydurma grafik gösterilmez; tüm alanlar "yakında" işaretlidir.
+ * Faz 1 dashboard: KPI şeridi, fiyat hareketi yer tutucusu, son araştırmalar
+ * (DEMO örnek tablo) ve kaynak durum paneli. Sahte metrik üretilmez.
  */
 export default function DashboardPage() {
   const kpis = [
-    { label: "İzlenen ürün", value: "—", icon: Package },
-    { label: "Bugünkü araştırma", value: "—", icon: Search },
-    { label: "Fiyat değişimi sinyali", value: "—", icon: BarChart3 },
-    { label: "Kaynak sağlığı", value: "—", icon: Sparkles },
+    { label: "İzlenen ürün", value: "—", hint: "Faz 2 ile aktif", icon: Package },
+    { label: "Bugünkü araştırma", value: "—", hint: "Faz 4 ile aktif", icon: Search },
+    { label: "Fiyat değişimi sinyali", value: "—", hint: "Faz 7 ile aktif", icon: BarChart3 },
+    { label: "Kaynak sağlığı", value: "1/4", hint: "Yalnız DemoProvider hazır", icon: Sparkles },
   ];
 
   return (
@@ -30,18 +35,18 @@ export default function DashboardPage() {
             Genel Bakış
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Faz 0 iskeleti: altyapı çalışıyor, veri ekranları sonraki fazlarda ekleniyor.
+            Ürün ve araştırma verisi ekranları sonraki fazlarda aktifleşiyor.
           </p>
         </div>
         <Badge variant="demo" className="ml-auto">
-          FAZ 0 · DEMO İSKELET
+          DEMO MOD
         </Badge>
       </header>
 
       <div
         data-testid="kpi-strip"
         className="grid grid-cols-2 gap-4 xl:grid-cols-4"
-        aria-label="KPI şeridi (yer tutucu)"
+        aria-label="KPI şeridi"
       >
         {kpis.map((kpi) => {
           const Icon = kpi.icon;
@@ -53,7 +58,7 @@ export default function DashboardPage() {
                 </span>
                 <div>
                   <p className="text-xs text-text-secondary">{kpi.label}</p>
-                  <p className="text-lg font-semibold tabular-nums" aria-label="Veri henüz yok">
+                  <p className="text-lg font-semibold tabular-nums" title={kpi.hint}>
                     {kpi.value}
                   </p>
                 </div>
@@ -75,25 +80,15 @@ export default function DashboardPage() {
             <EmptyState
               icon={BarChart3}
               title="Grafik verisi yok"
-              description="İlk başarılı fiyat gözleminden itibaren geçmiş burada oluşacak. Henüz araştırma yapılmadı."
+              description="İlk başarılı fiyat gözleminden itibaren geçmiş burada oluşacak. Eksik günler araya çizgi eklenerek doldurulmaz."
             />
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Son araştırmalar</CardTitle>
-            <CardDescription>Faz 4’te araştırma geçmişi tablo halinde listelenecek.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <EmptyState
-              icon={Search}
-              title="Henüz araştırma yapılmadı"
-              description="Ürün ekleyip “Piyasayı Araştır” çalıştırdığınızda sonuçlar burada listelenecek."
-            />
-          </CardContent>
-        </Card>
+        <SourceStatusCard />
       </div>
+
+      <RecentResearchCard />
+      <ResearchCtaCard />
     </section>
   );
 }

@@ -71,7 +71,7 @@ işaretlenir.
 | Faz | Kapsam | Durum |
 | --- | --- | --- |
 | 0 | Repository bootstrap, PostgreSQL, app shell | ✅ Tamamlandı |
-| 1 | Premium monochrome UI shell | ⏳ Sırada |
+| 1 | Premium monochrome UI shell | ✅ Tamamlandı |
 | 2 | Ürün kataloğu ve maliyet girdileri | ⏳ Sırada |
 | 3 | Provider katmanı + DemoProvider | ⏳ Sırada |
 | 4 | Araştırma orkestrasyonu + eşleştirme | ⏳ Sırada |
@@ -138,3 +138,56 @@ Mobil görünüm (390×844): ![Dashboard mobile](docs/screenshots/faz-0-dashboar
 - KPI değerleri bilinçli olarak `—` (veri yok) gösterir; sahte metrik üretilmez.
 - Faz 1'de tema düğmesi kalıcılığı, responsive çekmece menü, loading/skeleton
   ve hata durumları tamamlanacak.
+
+---
+
+## FAZ 1 — Premium monochrome UI shell ve gezinme
+
+**Durum:** ✅ Tamamlandı — `prompts/tests/TEST_01_UI_SHELL.md` kontrolleri geçti.
+
+### Yapılanlar
+
+- **Primitif bileşenler:** Button, Badge, Card, Input/Select/Textarea + Field
+  (label/hata), Table (tabular-nums, sağa hizalı sayısal hücreler), Tabs ve
+  Dialog (Radix, klavye erişilebilir), Tooltip, Skeleton/CardSkeleton,
+  EmptyState, ErrorState (role=alert + yeniden dene).
+- **Gezinme:** 7 rota aktif; aktif öğe `aria-current="page"` + lime nokta ile
+  işaretlenir. 1024px altında hamburger düğmesiyle Radix Dialog çekmece menü.
+- **Tema:** light/dark token'ları; tercih localStorage'da tutulur, ilk
+  boyamadan önce uygulanan satır içi betikle FOUC engellenir, yenileme
+  sonrası korunur (E2E ile doğrulanır).
+- **Dashboard:** KPI şeridi (sahte metrik yok: `—` veya gerçek kaynak sayısı
+  1/4), fiyat hareketi yer tutucusu (boş durum açıklamalı), kaynak durum
+  paneli (DemoProvider hazır; DataForSEO/Keepa/SerpApi kurulmadı), son
+  araştırmalar tablosu — tüm örnek satırlar `ÖRNEK KAYIT` + `DEMO VERİ`
+  etiketli, araştırma CTA'sı.
+- **Erişilebilirlik:** görünür odak halkası, klavye ile menü gezinme (E2E),
+  renk tek başına anlam taşımaz (badge metin + ikon), reduced-motion desteği.
+
+### Test sonuçları
+
+```
+npm run typecheck   → 0 hata
+npm run lint        → 0 hata, 0 uyarı
+npm test            → 17 test, 17 geçti (4 dosya; birim + entegrasyon + bileşen)
+npm run build       → başarılı
+npm run test:e2e    → 14 test, 14 geçti (tema kalıcılığı, mobil çekmece,
+                      klavye odağı, aria-current, DEMO etiketleri, 7 rota)
+```
+
+### Ekran görüntüleri
+
+| | |
+| --- | --- |
+| ![Dashboard light](docs/screenshots/faz-1-dashboard-light.png) | ![Dashboard dark](docs/screenshots/faz-1-dashboard-dark.png) |
+| Dashboard açık tema — KPI şeridi, kaynak durumları, DEMO tablo | Dashboard koyu tema |
+
+Mobil (390×844, tam sayfa): ![Dashboard mobile](docs/screenshots/faz-1-dashboard-mobile.png)
+
+### Bilinen sınırlar / sonraki faza hazırlık
+
+- Global arama alanı yer tutucudur; Faz 2'de ürün listesine bağlanacak.
+- "Yeni Araştırma" düğmesi henüz pasif; Faz 4'te araştırma akışını başlatacak.
+- Sonraki faz: ürün kataloğu (products + pricing_profiles şeması, CRUD API,
+  CSV içe aktarma).
+
