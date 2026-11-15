@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# testing
+coverage/
+playwright-report/
+test-results/
+
+# next.js
+.next/
+out/
+build/
+
+# env files (ASLA commit etmeyin - secret icerir)
+.env
+.env.local
+.env*.local
+
+# local databases
+.pglite-data/
+*.db
+
+# logs
+logs/
+*.log
+npm-debug.log*
+
+# misc
+.DS_Store
+*.pem
+.vercel
+next-env.d.ts
+tsconfig.tsbuildinfo
