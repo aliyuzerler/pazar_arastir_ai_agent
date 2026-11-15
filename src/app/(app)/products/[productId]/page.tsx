@@ -14,6 +14,7 @@ import {
 import { EmptyState } from "@/components/feedback/empty-state";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { ProductArchiveButton } from "@/features/products/product-archive-button";
+import { ResearchLauncher } from "@/features/research/research-launcher";
 import { getDb } from "@/server/db/driver";
 import { getProduct } from "@/server/db/repositories/product-repository";
 import { resolveWorkspaceContext } from "@/server/security/workspace-context";
@@ -83,7 +84,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           <ProductArchiveButton productId={product.id} archived={Boolean(product.archivedAt)} />
         </div>
       </header>
-
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -137,14 +137,19 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Piyasa araştırması</CardTitle>
-          <CardDescription>Faz 4 ile aktifleşecek.</CardDescription>
+        <CardHeader className="flex-row items-center justify-between">
+          <div>
+            <CardTitle>Piyasa araştırması</CardTitle>
+            <CardDescription>
+              DemoProvider anahtarsız çalışır; sonuçlar DEMO etiketli gelir.
+            </CardDescription>
+          </div>
+          {product.archivedAt ? null : <ResearchLauncher productId={product.id} />}
         </CardHeader>
         <CardContent>
           <EmptyState
-            title="Henüz araştırma çalıştırılmadı"
-            description="Faz 4'te bu bölümden birebir ürün ve muadil araştırması başlatılabilecek."
+            title="Bu ürün için henüz araştırma yapılmadı"
+            description="“Piyasayı Araştır” ile birebir ürün ve muadil teklifleri toplanır; eşleşmeleri onaylayıp fiyat analizine temel oluşturursunuz."
           />
         </CardContent>
       </Card>

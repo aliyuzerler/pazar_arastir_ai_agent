@@ -15,6 +15,13 @@
       "when": 1794769227509,
       "tag": "0001_wet_george_stacy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794771518106,
+      "tag": "0002_shocking_husk",
+      "breakpoints": true
     }
   ]
 }

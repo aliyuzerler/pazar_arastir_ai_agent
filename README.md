@@ -74,7 +74,7 @@ işaretlenir.
 | 1 | Premium monochrome UI shell | ✅ Tamamlandı |
 | 2 | Ürün kataloğu ve maliyet girdileri | ✅ Tamamlandı |
 | 3 | Provider katmanı + DemoProvider | ✅ Tamamlandı |
-| 4 | Araştırma orkestrasyonu + eşleştirme | ⏳ Sırada |
+| 4 | Araştırma orkestrasyonu + eşleştirme | ✅ Tamamlandı |
 | 5 | Fiyat geçmişi ve stok gözlemleri | ⏳ Sırada |
 | 6 | Fiyatlandırma öneri motoru | ⏳ Sırada |
 | 7 | İzleme, zamanlanmış işler, uyarılar | ⏳ Sırada |
@@ -299,3 +299,53 @@ Veri Kaynakları — sağlayıcı durumları (1440×900):
   (mevcut sürüm tek adımlı temel akış + şema doğrulaması).
 - Sonraki faz: research_runs/offers/product_matches tabloları, orkestrasyon
   (idempotency + partial success) ve exact/muadil eşleştirme motoru.
+
+---
+
+## FAZ 4 — Araştırma orkestrasyonu ve exact/muadil eşleştirme
+
+**Durum:** ✅ Tamamlandı — `prompts/tests/TEST_04_RESEARCH_AND_MATCHING.md` kontrolleri geçti.
+
+### Yapılanlar
+
+- **Şema:** `research_runs` (status makinesi, query plan, sağlayıcı hata listesi,
+  idempotency_key unique), `offers` (workspace+provider+providerOfferId unique),
+  `product_matches` (match_type/score/method/reasons/differences + review_status).
+- **Sorgu planı:** GTIN → MPN+marka → marka+model → başlık varyantları.
+- **Orkestratör:** configured provider'lar paralel; hata kaynak bazında izole;
+  `completed/partial/failed` durumları; kısmi sonuç paneli UI'da; idempotency
+  (aynı key aynı koşuyu döndürür, çift teklif üretmez); tekrar koşu upsert ile
+  çoğaltmaz (ilk görülme korunur).
+- **Eşleştirme motoru (deterministik):** GTIN→exact(100); MPN+marka→
+  likely_exact(95); marka+model→kritik varyant uyumuna göre likely_exact(85)
+  veya substitute(45)+fark listesi; ortak kullanım terimi→substitute(50);
+  yalnız başlık→unreviewed(10). Başlık benzerliği tek başına exact veremez.
+- **Kullanıcı kararı:** onay/red kalıcıdır; sonraki koşular onaylı sınıfı
+  geri düşürmez (yayın testiyle doğrulanır).
+- **Arayüz:** ürün detayında “Piyasayı Araştır” (idempotent koşu), sonuç
+  sayfası sekmeleri (Birebir / Muadiller / Tüm teklifler), teklif satırında
+  gerekçe + fark + kargo “Bilgi yok” + stok “Bilinmiyor” + kaynak linki +
+  DEMO rozeti + güncellik uyarısı; araştırma listesi sayfası.
+
+### Test sonuçları
+
+```
+npm run typecheck   → 0 hata
+npm test            → 65 test, 65 geçti (eşleştirme motoru + orkestratör entegrasyonu)
+npm run build       → başarılı
+npm run test:e2e    → 22 test, 22 geçti (araştırma → onay kalıcılığı akışı)
+```
+
+### Ekran görüntüleri
+
+| | |
+| --- | --- |
+| ![Araştırma sonucu](docs/screenshots/faz-4-research-result-light.png) | ![Ürün detay](docs/screenshots/faz-4-product-detail-light.png) |
+| Araştırma sonucu — sekmeler, eşleşme gerekçeleri, DEMO rozetleri | Ürün detay — “Piyasayı Araştır” başlatıcısı |
+
+### Bilinen sınırlar / sonraki faza hazırlık
+
+- AI destekli muadil sınıflandırma opsiyonel ve bu fazda kapsam dışı;
+  deterministik kurallar yeterli kabul edilir.
+- Sonraki faz: her koşunun fiyat/stok gözlem kaydı (price_observations),
+  grafik ve CSV dışa aktarma.

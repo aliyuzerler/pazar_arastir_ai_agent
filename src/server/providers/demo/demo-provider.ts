@@ -98,6 +98,20 @@ const HEADPHONE_FIXTURES: DemoFixture[] = [
     variantAttributes: { Renk: "Beyaz" }, // yanlış varyant → exact olamaz
   },
   {
+    providerOfferId: "demo-offer-mpn-2",
+    title: "SesMark ANC-P Kulaklık (Resmi Satıcı)",
+    brand: "SesMark",
+    model: "ANC-P",
+    mpn: "SM-ANC-P-BLK", // GTIN yok; MPN+marka kanıtı → likely_exact
+    gtin: null,
+    sellerName: "SesMark Resmi Mağaza",
+    priceAmount: "1359.00",
+    shippingAmount: "0.00",
+    availabilityStatus: "in_stock",
+    stockQuantity: 12,
+    variantAttributes: { Renk: "Siyah" },
+  },
+  {
     providerOfferId: "demo-offer-sub-1",
     title: "TechSound Hush Over-Ear Kulaklık ANC",
     brand: "TechSound",

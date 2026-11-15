@@ -1,3 +1,6 @@
 export * from "./workspaces";
 export * from "./pricing-profiles";
 export * from "./products";
+export * from "./research-runs";
+export * from "./offers";
+export * from "./product-matches";

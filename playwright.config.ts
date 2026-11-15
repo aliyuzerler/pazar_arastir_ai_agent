@@ -24,10 +24,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev",
+    // Production build ile başlat: çalışma zamanı derleme gecikmesi olmaz.
+    command: "npm run build && npm run start",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
+    timeout: 420_000,
     env: {
       DB_DRIVER: "pglite",
       PG_LITE_DATA_DIR: "/tmp/product-intel-e2e-pgdata",
