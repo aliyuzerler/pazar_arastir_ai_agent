@@ -24,6 +24,7 @@ mkdirSync(OUT, { recursive: true });
 const VIEWPORTS = [
   { suffix: "light", width: 1440, height: 900, theme: "light", fullPage: false },
   { suffix: "dark", width: 1440, height: 900, theme: "dark", fullPage: false },
+  { suffix: "tablet", width: 1024, height: 768, theme: "light", fullPage: false },
   { suffix: "mobile", width: 390, height: 844, theme: "light", fullPage: true },
 ];
 

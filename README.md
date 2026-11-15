@@ -16,7 +16,7 @@ göre açıklanabilir satış fiyatı önerileri üretmek için bu paneli kullan
 | UI + server | Next.js 15 App Router + TypeScript (strict) |
 | UI | Tailwind CSS 4 + shadcn tarzı bileşenler + Lucide |
 | Veritabanı | PostgreSQL (Drizzle ORM ile) |
-| Test | Vitest (birim + entegrasyon), Playwright (E2E) |
+| Test | Vitest (111 test), Playwright (31 E2E) |
 | Şema doğrulama | Zod |
 | Para matematiği | Decimal.js (Faz 6'dan itibaren) |
 
@@ -79,7 +79,7 @@ işaretlenir.
 | 6 | Fiyatlandırma öneri motoru | ✅ Tamamlandı |
 | 7 | İzleme, zamanlanmış işler, uyarılar | ✅ Tamamlandı |
 | 8 | SaaS-ready tenancy ve Vercel hazırlığı | ✅ Tamamlandı |
-| 9 | Hardening ve release candidate | ⏳ Sırada |
+| 9 | Hardening ve release candidate | ✅ Tamamlandı |
 
 ---
 
@@ -540,3 +540,71 @@ npm run test:e2e    → 30 test, 30 geçti (ayarlar ekranı + secret sızmama id
 
 Ayarlar — çalışma alanı, mod ve release gate (1440×900):
 ![Ayarlar](docs/screenshots/faz-8-settings-light.png)
+
+---
+
+## FAZ 9 — Hardening ve release candidate
+
+**Durum:** ✅ Tamamlandı — `docs/11_RELEASE_CHECKLIST.md` maddeleri karşılığı
+aşağıda; `prompts/tests/TEST_09_HARDENING_AND_RELEASE.md` kontrolleri geçti.
+
+### Sürüm denetim tablosu
+
+| Alan | Madde | Durum |
+| --- | --- | --- |
+| Veri doğruluğu | Demo/live ayrımı her ekranda | ✅ (DEMO/ÖRNEK rozetleri + E2E iddiaları) |
+| Veri doğruluğu | Source + observed timestamp + URL | ✅ (teklif satırı sözleşmesi) |
+| Veri doğruluğu | Stok adedi null → sayı yok | ✅ (birim testleri) |
+| Veri doğruluğu | Kargo bilinmiyorsa teslim toplamı uydurulmaz | ✅ |
+| Veri doğruluğu | price history source_kind ayrımı | ✅ (grafik iki seri) |
+| Veri doğruluğu | exact/substitute ayrımı | ✅ (ayrı sekmeler + motor testleri) |
+| Veri doğruluğu | Decimal fiyat hesabı + formül açıklaması + güven skoru | ✅ (Faz 6) |
+| Güvenlik | Secret bundle'a sızmıyor | ✅ (`npm run audit:bundle`) |
+| Güvenlik | Auth gate olmadan public yayın engelli | ✅ (instrumentation + PROD_READY) |
+| Güvenlik | Workspace scoping tüm query'lerde | ✅ (TEST_08 izolasyon denetimi) |
+| Güvenlik | CSV içe/dışa aktarma güvenli | ✅ (formül nötralizasyonu testli) |
+| Güvenlik | Cron route secret doğruluyor | ✅ (E2E 401 iddiası) |
+| Güvenilirlik | Provider hatası diğer kaynağı düşürmez + partial results | ✅ (Faz 3/4) |
+| Güvenilirlik | Retry/idempotency | ✅ (araştırma + izleme testleri) |
+| Güvenilirlik | Cron bounded batch | ✅ (maks 5 iş/kilit) |
+| UX | Loading/empty/error/stale/partial durumları | ✅ (bileşenler + testler) |
+| UX | 1440 / 1024 / 390 görsel kontrol | ✅ (docs/screenshots/release-*) |
+| UX | Dark/light kontrast + klavye odağı | ✅ (E2E) |
+| UX | Mobilde tablo taşması | ✅ (yatay kaydırma sarmalayıcıları) |
+
+> Açık bırakılan tek madde: **API rate limiting** (uygulama içi) — tek kullanıcı
+> yerel mod için sınırlı öncelik; SaaS geçişinde auth ile birlikte planlanır.
+> DB backup planı yönetilen PostgreSQL sağlayıcısının PITR özelliğiyle sağlanır.
+
+### Uçtan uca yolculuk testi
+
+`src/tests/e2e/journey.spec.ts` — profil oluştur → ürün araştır → muadil onayla
+→ fiyat geçmişi doğrula → 3 strateji önerisi üret → izleme işini doğrula:
+**tek akışta geçiyor**.
+
+### Test sonuçları
+
+```
+npm run typecheck   → 0 hata
+npm run lint        → 0 hata
+npm test            → 111 test, 111 geçti
+npm run build       → başarılı
+npm run audit:bundle→ secret sızıntısı yok
+npm run test:e2e    → 31 test, 31 geçti
+```
+
+### Vercel + yönetilen PostgreSQL dağıtımı
+
+1. Neon/Vercel Postgres üzerinde bir veritabanı açın ve `DATABASE_URL`'i kopyalayın.
+2. Vercel proje ayarlarına env'leri girin: `APP_MODE=production`,
+   `DATABASE_URL`, `CRON_SECRET` (rastgele uzun değer), sağlayıcı anahtarları
+   (opsiyonel) ve **`PROD_READY=true`** (yalnızca auth eklendikten sonra).
+3. `vercel.json` içindeki cron tanımı `/api/cron/monitoring` ucunu 6 saatte bir
+   çağırır; uç `CRON_SECRET` ile korunur.
+4. İlk deploy sonrası migration: `npm run db:migrate` (bir kez, yönetilen DB'ye).
+
+### Release
+
+- Etiket: **v0.1.0-rc1**
+- Bilinen sınırlar: kullanıcı kaydı/auth yok (yerel mod), API rate limiting
+  uygulama içi yok, canlı sağlayıcılar anahtar eklenene kadar demo kalır.
