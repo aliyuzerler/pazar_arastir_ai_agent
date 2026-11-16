@@ -1,4 +1,4 @@
-import { ShieldCheck, ShieldAlert, Database, KeyRound, Users } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Database, KeyRound, Users, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { getEnv } from "@/lib/env";
 import { getDbDriverName } from "@/server/db/driver";
+import { getResearchAssistantStatus } from "@/server/ai/research-assistant";
 import { resolveWorkspaceContext } from "@/server/security/workspace-context";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,7 @@ export default async function SettingsPage() {
   const prodReady = process.env.PROD_READY === "true";
   const cronConfigured =
     Boolean(env.CRON_SECRET) && env.CRON_SECRET !== "change-this-to-a-long-random-secret";
+  const assistant = getResearchAssistantStatus();
 
   const sessionSecretSet = Boolean(process.env.SESSION_SECRET) && process.env.SESSION_SECRET !== "dev-session-secret-change-me";
   const gates = [
@@ -121,6 +123,29 @@ export default async function SettingsPage() {
             </p>
             <p className="text-xs text-text-secondary">
               Günlük sağlayıcı sorgu bütçesi: {env.MAX_DAILY_QUERIES} sorgu.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex-row items-center justify-between">
+            <div>
+              <CardTitle>AI asistan (Gemini)</CardTitle>
+              <CardDescription>Arama önerisi ve Türkçe özet; veri kaynağı değildir.</CardDescription>
+            </div>
+            <Sparkles className="size-4 text-text-secondary" aria-hidden />
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p className="flex items-center gap-2">
+              <Badge variant={assistant.configured ? "success" : "neutral"}>
+                {assistant.configured ? "Yapılandırıldı" : "Devre dışı"}
+              </Badge>
+              <Badge variant="neutral">Model: {assistant.model}</Badge>
+            </p>
+            <p className="text-xs text-text-secondary">
+              {assistant.configured
+                ? "GEMINI_API_KEY yalnızca sunucu tarafında okunur ve hiçbir ekranda gösterilmez. AI fiyat, stok veya eşleşme kararı üretemez; yalnızca sorgu önerisi ve özet verir. Bölge kısıtlı ağlarda çağrılar araştırmayı bozmadan devre dışı kalır."
+                : "Etkinleştirmek için GEMINI_API_KEY (isteğe bağlı GEMINI_MODEL) ortam değişkenlerini tanımlayın."}
             </p>
           </CardContent>
         </Card>

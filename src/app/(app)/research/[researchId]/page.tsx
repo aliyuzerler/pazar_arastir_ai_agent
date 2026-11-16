@@ -24,6 +24,7 @@ import {
   type MatchWithOffer,
 } from "@/server/db/repositories/offer-repository";
 import { getResearchRun } from "@/server/application/research-orchestrator";
+import type { ResearchAssistantMeta } from "@/server/db/schema";
 import { resolveWorkspaceContext } from "@/server/security/workspace-context";
 
 export const dynamic = "force-dynamic";
@@ -190,6 +191,8 @@ export default async function ResearchResultPage({ params }: ResearchResultPageP
         </div>
       ) : null}
 
+      {run.assistant ? <AssistantCard meta={run.assistant} /> : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Sorgu planı</CardTitle>
@@ -254,6 +257,50 @@ export default async function ResearchResultPage({ params }: ResearchResultPageP
         </Tabs>
       )}
     </section>
+  );
+}
+
+function AssistantCard({ meta }: { meta: ResearchAssistantMeta }) {
+  const unavailable = meta.status === "unavailable";
+  return (
+    <Card data-testid="assistant-card">
+      <CardHeader className="flex-row items-center justify-between">
+        <div>
+          <CardTitle>AI değerlendirmesi (Gemini)</CardTitle>
+          <CardDescription>
+            Yapay zekâ yalnızca sorgu önerisi ve özet üretir; fiyat, stok ve eşleşme kararları
+            sağlayıcı verisiyle deterministik hesaplanır.
+          </CardDescription>
+        </div>
+        <Badge variant={unavailable ? "warning" : "info"}>
+          {unavailable ? "KULLANILAMADI" : meta.model}
+        </Badge>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        {unavailable ? (
+          <p className="text-xs text-text-secondary">
+            Gemini bu koşuda yanıt vermedi (neden: {meta.reason}). Araştırma deterministik
+            adımlarla tamamlandı; ağ koşulları düzeldiğinde yeni koşu özeti üretir.
+          </p>
+        ) : (
+          <>
+            {meta.summary ? <p>{meta.summary}</p> : null}
+            {meta.substituteNotes && meta.substituteNotes.length > 0 ? (
+              <ul className="list-disc space-y-1 pl-5 text-text-secondary">
+                {meta.substituteNotes.map((note) => (
+                  <li key={note}>{note}</li>
+                ))}
+              </ul>
+            ) : null}
+          </>
+        )}
+        {meta.queriesAdded > 0 ? (
+          <p className="text-xs text-text-secondary">
+            Sorgu planına {meta.queriesAdded} Gemini önerisi eklendi.
+          </p>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
 

@@ -83,6 +83,7 @@ işaretlenir.
 | 10 | Kimlik doğrulama altyapısı (kayıt/giriş/oturum) | ✅ Tamamlandı |
 | 11 | E-posta doğrulama ve parola sıfırlama | ✅ Tamamlandı |
 | 12 | Admin paneli ve Vercel deployment hazırlığı | ✅ Tamamlandı |
+| 13 | Gemini ResearchAssistant (opsiyonel AI yardımcısı) | ✅ Tamamlandı |
 
 ---
 
@@ -751,3 +752,66 @@ npm run test:e2e    → 43 test, 43 geçti (admin akışları, 403 iddiası,
 | --- | --- |
 | ![Admin genel bakış](docs/screenshots/faz-12-admin-light.png) | ![Kullanıcı yönetimi](docs/screenshots/faz-12-admin-users-light.png) |
 | Yönetim paneli — kiracı sayıları + e-posta kaydı | Kullanıcı yönetimi — rol/aktiflik/doğrulama aksiyonları |
+
+
+---
+
+## FAZ 13 — Gemini ResearchAssistant (opsiyonel AI yardımcısı)
+
+**Durum:** ✅ Tamamlandı — `docs/02 §9` ResearchAssistant portu uygulandı;
+tüm test katmanları yeşil (aşağıda).
+
+### Yapılanlar
+
+- **ResearchAssistant portu + Gemini adaptörü** (`src/server/ai/research-assistant.ts`):
+  iki yetenek — ürüne ek arama sorgusu önerisi (`suggestQueries`) ve tekliflerin
+  Türkçe özeti (`summarizeFindings`). Varsayılan model `gemini-3.8-flash`
+  (`GEMINI_MODEL` ile değiştirilebilir); `x-goog-api-key` başlığı, 20 sn zaman
+  aşımı, JSON-only yanıt modu ve markdown çiti toleransı.
+- **Güvenlik sınırları:** modele fiyatsız/stoksuz teklif kesiti gider; çıktı
+  beyaz liste alanlı Zod şemalarıyla doğrulanır — AI fiyat, stok,
+  bulunabilirlik, GTIN veya satıcı üretemez ve eşleşme kararına müdahale
+  edemez (AGENTS.md kuralı). Anahtar yalnızca sunucu env'inden okunur; hata
+  mesajları sanitize edilir (anahtar desenleri kırmızıya çekilir).
+- **Orkestratör entegrasyonu:** sorgu planı AI önerileriyle genişletilir
+  (tekrarsız, en fazla 8 sorgu); koşu sonunda `research_runs.assistant`
+  jsonb kolonuna meta yazılır (migration `0007_assistant_meta`). Her hata
+  zarif düşer: asistan devre dışıysa veya erişilemezse araştırma deterministik
+  adımlarla aynen tamamlanır, koşu `unavailable` nedeniyle işaretlenir.
+- **UI:** araştırma sonucu sayfasında "AI değerlendirmesi (Gemini)" kartı
+  (özet + muadil gözlemleri ya da KULLANILAMADI + sanitise edilmiş neden);
+  Ayarlar sayfasında yapılandırma durumu kartı (anahtar hiçbir ekranda
+  gösterilmez).
+- **Yardımcı betik:** `scripts/create-demo-admin.ts` — pglite demo
+  veritabanına idempotent yerel admin ekler.
+
+### Canlı doğrulama ve bölge kısıtı
+
+Kullanıcının ücretsiz katman Gemini anahtarı ile canlı test yapıldı: anahtar
+geçerli (API anahtarı olarak tanınıyor); ancak geliştirme sandbox'ının çıkış
+IP'si (Hong Kong) Google Gemini API'nin desteklemediği bir bölgede olduğu
+için `generateContent` çağrısı HTTP 400 "User location is not supported"
+döndü. Uygulama bu durumu doğru karşıladı: araştırma tamamlandı, koşu
+`assistant.status=unavailable (http_error)` olarak kaydedildi ve sonuç
+ekranı nedeni şeffafça gösterdi. Türkiye'den ya da Vercel'den (ABD/AB) aynı
+anahtarla çağrı çalışır; ilk başarılı koşuda özet kartı otomatik dolar.
+Not: Gemini yalnızca asistan katmanıdır; teklif/fiyat verisi için canlı
+kaynak (DataForSEO credential'ı) ayrıca gereklidir, aksi halde teklifler
+`DEMO` işaretli DemoProvider fixture'larından gelir.
+
+### Test sonuçları
+
+```
+npm run typecheck   → 0 hata
+npm test            → 144 test, 144 geçti (7 asistan birim + 3 orkestratör
+                      entegrasyon testi dahil)
+npm run build       → başarılı
+npm run test:e2e    → 43 test, 43 geçti
+```
+
+### Ekran görüntüleri
+
+| | |
+| --- | --- |
+| ![Araştırma sonucu](docs/screenshots/faz-13-research-gemini-unavailable-light.png) | ![Ayarlar](docs/screenshots/faz-13-settings-gemini-light.png) |
+| Araştırma sonucu — AI kartı bölge kısıtını şeffaf raporlar, koşu tamamlanır | Ayarlar — Gemini yapılandırma durumu (anahtar gösterilmez) |

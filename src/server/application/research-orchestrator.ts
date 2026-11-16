@@ -9,7 +9,7 @@ import {
   researchRuns,
   type ResearchRun,
 } from "@/server/db/schema";
-import type { Product } from "@/server/db/schema";
+import type { Product, ResearchAssistantMeta } from "@/server/db/schema";
 import {
   classifyOffer,
   type MatchDecision,
@@ -20,6 +20,13 @@ import {
   createProviders,
   runProviderSearch,
 } from "@/server/providers/registry";
+import {
+  getResearchAssistantStatus,
+  suggestQueries,
+  summarizeFindings,
+  type AssistantOutcome,
+  type AssistantSummaryData,
+} from "@/server/ai/research-assistant";
 import type {
   NormalizedOffer,
   ProviderPricePoint,
@@ -33,6 +40,22 @@ export function buildQueryPlan(product: Product): string[] {
   if (product.brand && product.model) queries.push(`${product.brand} ${product.model}`);
   queries.push(product.title);
   return queries;
+}
+
+/** Sorgu planını AI önerileriyle birleştirir; tekrarları atar, uzunluğu sınırlar. */
+const MAX_QUERY_PLAN = 8;
+
+function mergeQueryPlan(base: string[], suggestions: string[]): string[] {
+  const seen = new Set(base.map((query) => query.trim().toLocaleLowerCase("tr-TR")));
+  const merged = [...base];
+  for (const query of suggestions) {
+    const key = query.trim().toLocaleLowerCase("tr-TR");
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    merged.push(query);
+    if (merged.length >= MAX_QUERY_PLAN) break;
+  }
+  return merged;
 }
 
 function toProviderContext(product: Product): ProviderProductContext {
@@ -81,13 +104,34 @@ export async function runResearch(
   const providers = createProviders().filter((provider) => provider.isConfigured());
   const requestedIds = providers.map((provider) => provider.id);
 
+  // AI asistan (opsiyonel): sorgu planını genişletir; her hata zarifçe düşer
+  // ve araştırma akışını asla engellemez (docs/02 §9).
+  const assistant = getResearchAssistantStatus();
+  const baseQueryPlan = buildQueryPlan(product);
+  let assistantQueries: string[] = [];
+  let assistantQueryLatencyMs = 0;
+  if (assistant.configured) {
+    const suggestionStartedAt = Date.now();
+    try {
+      const suggestion = await suggestQueries({
+        product: toProviderContext(product),
+        existingQueries: baseQueryPlan,
+      });
+      if (suggestion.ok) assistantQueries = suggestion.data;
+    } catch {
+      // asistan hatası araştırmayı engellemez
+    }
+    assistantQueryLatencyMs = Date.now() - suggestionStartedAt;
+  }
+  const queryPlan = mergeQueryPlan(baseQueryPlan, assistantQueries);
+
   const inserted = await db
     .insert(researchRuns)
     .values({
       workspaceId,
       productId: product.id,
       status: "queued",
-      queryPlan: buildQueryPlan(product),
+      queryPlan,
       providersRequested: requestedIds,
       idempotencyKey: options.idempotencyKey ?? null,
       startedAt: new Date(),
@@ -153,10 +197,53 @@ export async function runResearch(
   const succeeded = outcomes.filter((outcome) => !outcome.error).length;
   const status = succeeded === 0 ? "failed" : succeeded === outcomes.length ? "completed" : "partial";
 
+  // AI asistan Türkçe özeti (opsiyonel): modele fiyatsız teklif kesiti gider,
+  // çıktı Zod şemasıyla doğrulanır; hata koşu statüsünü değiştirmez.
+  let assistantMeta: ResearchAssistantMeta | null = null;
+  if (assistant.configured) {
+    const summaryStartedAt = Date.now();
+    if (collectedOffers.length === 0) {
+      assistantMeta = {
+        model: assistant.model,
+        status: "ok",
+        queriesAdded: assistantQueries.length,
+        latencyMs: assistantQueryLatencyMs,
+      };
+    } else {
+      let summary: AssistantOutcome<AssistantSummaryData>;
+      try {
+        summary = await summarizeFindings({
+          product: toProviderContext(product),
+          offers: collectedOffers,
+        });
+      } catch {
+        summary = { ok: false, reason: "unknown" };
+      }
+      const latencyMs = assistantQueryLatencyMs + (Date.now() - summaryStartedAt);
+      assistantMeta = summary.ok
+        ? {
+            model: assistant.model,
+            status: "ok",
+            queriesAdded: assistantQueries.length,
+            summary: summary.data.summary,
+            substituteNotes: summary.data.substituteNotes,
+            latencyMs,
+          }
+        : {
+            model: assistant.model,
+            status: "unavailable",
+            reason: summary.reason,
+            queriesAdded: assistantQueries.length,
+            latencyMs,
+          };
+    }
+  }
+
   const updated = await db
     .update(researchRuns)
     .set({
       status,
+      assistant: assistantMeta,
       providerErrors,
       totalResults: total,
       exactCount: exact,

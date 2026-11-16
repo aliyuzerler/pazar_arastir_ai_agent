@@ -4,6 +4,25 @@ import { index, jsonb, pgTable, text, timestamp, uniqueIndex, uuid, integer } fr
 import { products, workspaces } from "./index";
 
 /**
+ * Koşu başına AI asistan (Gemini) sonucu. Yalnızca yardımcı bilgiler taşır:
+ * fiyat, stok, eşleşme kararı gibi alanlar ASLA buradan gelmez — bunlar
+ * yalnızca sağlayıcı verisi ve deterministik motor ile üretilir.
+ * Asistan devre dışıysa kolon null kalır.
+ */
+export interface ResearchAssistantMeta {
+  /** Kullanılan model adı (ör. gemini-3.8-flash). */
+  model: string;
+  status: "ok" | "unavailable";
+  /** status=unavailable iken sanitise edilmiş neden (ör. http_error, region). */
+  reason?: string;
+  /** Koşu sorgu planına eklenen AI sorgu önerisi sayısı. */
+  queriesAdded: number;
+  summary?: string;
+  substituteNotes?: string[];
+  latencyMs?: number;
+}
+
+/**
  * Araştırma koşusu. IdempotencyKey aynı workspace'te benzersizdir; aynı key
  * ile tekrar POST yeni koşu oluşturmaz (TEST_04 md-14).
  */
@@ -28,6 +47,7 @@ export const researchRuns = pgTable(
     exactCount: integer("exact_count").notNull().default(0),
     substituteCount: integer("substitute_count").notNull().default(0),
     errorSummary: text("error_summary"),
+    assistant: jsonb("assistant").$type<ResearchAssistantMeta | null>(),
     idempotencyKey: text("idempotency_key"),
     startedAt: timestamp("started_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true }),

@@ -40,3 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .pglite-test-data/
+.pglite-demo-data/
+.pglite-test-data-assistant/
